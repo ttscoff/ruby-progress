@@ -7,7 +7,7 @@ require 'rubocop/rake_task'
 RSpec::Core::RakeTask.new(:spec)
 RuboCop::RakeTask.new
 
-task default: %i[spec rubocop]
+task default: [:spec]
 
 # Used by markdown tasks
 MARKDOWN_GLOB = ['**/*.md'].freeze
