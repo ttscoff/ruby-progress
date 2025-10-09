@@ -22,10 +22,16 @@ module PrgCLI
       RippleCLI.run
     when 'worm'
       WormCLI.run
+    when 'twirl'
+      TwirlCLI.run
+    when '--list-styles'
+      show_styles
+      exit
     when '-v', '--version'
       puts "prg version #{RubyProgress::VERSION}"
-      puts '  ripple - Text ripple animation with spinners and effects'
+      puts '  ripple - Text ripple animation with color effects'
       puts '  worm   - Unicode wave animation with customizable styles'
+      puts '  twirl  - Spinner animation with various indicator styles'
       exit
     when '-h', '--help', 'help'
       show_help
@@ -45,20 +51,61 @@ module PrgCLI
           prg <subcommand> [options]
 
       SUBCOMMANDS:
-          ripple    Text ripple animation with spinners and color effects
+          ripple    Text ripple animation with color effects
           worm      Unicode wave animation with customizable dot styles
+          twirl     Spinner-based animation with various indicator styles
 
       GLOBAL OPTIONS:
           -v, --version    Show version information
           -h, --help       Show this help message
+          --list-styles    List all available styles for all subcommands
 
       EXAMPLES:
-          prg ripple "Loading..." --rainbow --speed fast
+          prg ripple "Loading..." --style rainbow --speed fast
           prg worm --message "Processing" --style blocks --checkmark
+          prg twirl --message "Spinning" --style dots --checkmark
           prg ripple --command "sleep 3" --success "Done!" --checkmark
 
       Run 'prg <subcommand> --help' for specific subcommand options.
     HELP
+  end
+
+  # Detach the current process into a background daemon so the calling shell
+  # doesn't track it as a job (prevents 'job ... has ended' notifications).
+  # Intentionally keeps stdio open so the daemon can print a final message.
+  def self.daemonize
+    return if ENV['PRG_NO_DAEMONIZE'] == '1'
+
+    pid = fork
+    if pid
+      # Parent exits immediately; child continues
+      exit 0
+    end
+
+    # Become session leader and detach from controlling terminal
+    Process.setsid
+
+    # Second fork to avoid reacquiring a controlling terminal
+    pid2 = fork
+    exit 0 if pid2
+
+    # Do not chdir or close stdio: we want to be able to emit completion output
+  end
+
+  def self.show_styles
+    puts '== ripple'
+    puts 'rainbow'
+    puts 'inverse'
+    puts ''
+    puts '== worm'
+    puts 'circles'
+    puts 'blocks'
+    puts 'geometric'
+    puts ''
+    puts '== twirl'
+    RubyProgress::INDICATORS.each_key do |name|
+      puts name
+    end
   end
 end
 
@@ -73,11 +120,8 @@ module RippleCLI
     options = {
       speed: :medium,
       direction: :bidirectional,
-      rainbow: false,
-      spinner: false,
-      spinner_position: :before,
+      styles: [],
       caps: false,
-      inverse: false,
       command: nil,
       success_message: nil,
       fail_message: nil,
@@ -104,36 +148,16 @@ module RippleCLI
         options[:message] = msg
       end
 
-      opts.on('-r', '--rainbow', 'Enable rainbow color mode') do
-        options[:rainbow] = true
+      opts.on('--style STYLES', 'Animation styles (rainbow, inverse - can be comma-separated)') do |styles|
+        options[:styles] = styles.split(',').map(&:strip).map(&:to_sym)
       end
 
       opts.on('-d', '--direction DIRECTION', 'Animation direction (forward/bidirectional or f/b)') do |f|
         options[:format] = f =~ /^f/i ? :forward_only : :bidirectional
       end
 
-      opts.on('-i', '--inverse', 'Enable inverse highlighting mode') do
-        options[:inverse] = true
-      end
-
-      opts.separator ''
-      opts.separator 'Spinner Options:'
-
-      opts.on('--spinner TYPE', 'Use spinner animation instead of text ripple') do |type|
-        options[:spinner] = type.normalize_type
-      end
-
-      opts.on('--spinner-pos POSITION', 'Spinner position (before/after or b/a)') do |pos|
-        options[:spinner_position] = pos =~ /^a/i ? :after : :before
-      end
-
       opts.on('--caps', 'Enable case transformation mode') do
         options[:caps] = true
-      end
-
-      opts.on('--list-spinners', 'List all available spinner types') do
-        show_spinners
-        exit
       end
 
       opts.separator ''
@@ -188,7 +212,14 @@ module RippleCLI
       opts.on('--stop-error MESSAGE', 'When stopping, show this error message') do |msg|
         options[:stop_error] = msg
       end
-      opts.on('--stop-checkmark', 'When stopping, include a success/error checkmark') { options[:stop_checkmark] = true }
+      opts.on('--stop-checkmark', 'When stopping, include a success/error checkmark') do
+        options[:stop_checkmark] = true
+      end
+
+      opts.separator ''
+      opts.separator 'Daemon notes:'
+      opts.separator '  - Do not append &; prg detaches itself and returns immediately.'
+      opts.separator '  - Use --status/--stop with optional --pid-file to control it.'
 
       opts.separator ''
       opts.separator 'General:'
@@ -221,6 +252,9 @@ module RippleCLI
       )
       exit
     elsif options[:daemon]
+      # For daemon mode, detach so shell has no tracked job
+      PrgCLI.daemonize
+
       # For daemon mode, default message if none provided
       text = options[:message] || ARGV.join(' ')
       text = 'Processing' if text.nil? || text.empty?
@@ -233,18 +267,16 @@ module RippleCLI
         puts "Example: prg ripple 'Loading...' or prg ripple --message 'Loading...'"
         exit 1
       end
+
+      # Convert styles array to individual flags for backward compatibility
+      options[:rainbow] = options[:styles].include?(:rainbow)
+      options[:inverse] = options[:styles].include?(:inverse)
+
       if options[:command]
         run_with_command(text, options)
       else
         run_indefinitely(text, options)
       end
-    end
-  end
-
-  def self.show_spinners
-    puts 'Available spinners:'
-    RubyProgress::INDICATORS.each do |name, chars|
-      puts "  #{name.to_s.ljust(15)} #{chars[0..2].join(' ')}"
     end
   end
 
@@ -334,11 +366,11 @@ module WormCLI
     options = parse_cli_options
 
     if options[:status]
-      pid_file = options[:pid_file] || RubyProgress::Daemon.default_pid_file
+      pid_file = resolve_pid_file(options, :status_name)
       RubyProgress::Daemon.show_status(pid_file)
       exit
     elsif options[:stop]
-      pid_file = options[:pid_file] || RubyProgress::Daemon.default_pid_file
+      pid_file = resolve_pid_file(options, :stop_name)
       stop_msg = options[:stop_error] || options[:stop_success]
       is_error = !options[:stop_error].nil?
       RubyProgress::Daemon.stop_daemon_by_pid_file(
@@ -349,6 +381,8 @@ module WormCLI
       )
       exit
     elsif options[:daemon]
+      # Detach before starting daemon logic so there's no tracked shell job
+      PrgCLI.daemonize
       run_daemon_mode(options)
     else
       progress = RubyProgress::Worm.new(options)
@@ -362,8 +396,8 @@ module WormCLI
   end
 
   def self.run_daemon_mode(options)
-    # Use default PID file if none specified
-    pid_file = options[:pid_file] || RubyProgress::Daemon.default_pid_file
+    # Use daemon name or default PID file if none specified
+    pid_file = resolve_pid_file(options, :daemon_name)
 
     # Ensure directory exists
     FileUtils.mkdir_p(File.dirname(pid_file))
@@ -382,6 +416,16 @@ module WormCLI
     ensure
       # Clean up PID file
       File.delete(pid_file) if File.exist?(pid_file)
+    end
+  end
+
+  def self.resolve_pid_file(options, name_key)
+    return options[:pid_file] if options[:pid_file]
+
+    if options[name_key]
+      "/tmp/ruby-progress/#{options[name_key]}.pid"
+    else
+      RubyProgress::Daemon.default_pid_file
     end
   end
 
@@ -439,16 +483,35 @@ module WormCLI
         options[:daemon] = true
       end
 
+      opts.on('--daemon-as NAME', 'Run in daemon mode with custom name (creates /tmp/ruby-progress/NAME.pid)') do |name|
+        options[:daemon] = true
+        options[:daemon_name] = name
+      end
+
       opts.on('--pid-file FILE', 'Write process ID to file (default: /tmp/ruby-progress/progress.pid)') do |file|
         options[:pid_file] = file
       end
 
-      opts.on('--stop', 'Stop daemon (uses default PID file unless --pid-file specified)') { options[:stop] = true }
-      opts.on('--status', 'Show daemon status (running/not running)') { options[:status] = true }
-      opts.on('--stop-success MESSAGE', 'When stopping, show this success message') do |msg|
+      opts.on('--stop', 'Stop daemon (uses default PID file unless --pid-file specified)') do
+        options[:stop] = true
+      end
+      opts.on('--stop-id NAME', 'Stop daemon by name (automatically implies --stop)') do |name|
+        options[:stop] = true
+        options[:stop_name] = name
+      end
+      opts.on('--status', 'Show daemon status (uses default PID file unless --pid-file specified)') do
+        options[:status] = true
+      end
+      opts.on('--status-id NAME', 'Show daemon status by name') do |name|
+        options[:status] = true
+        options[:status_name] = name
+      end
+      opts.on('--stop-success MESSAGE', 'Stop daemon with success message (automatically implies --stop)') do |msg|
+        options[:stop] = true
         options[:stop_success] = msg
       end
-      opts.on('--stop-error MESSAGE', 'When stopping, show this error message') do |msg|
+      opts.on('--stop-error MESSAGE', 'Stop daemon with error message (automatically implies --stop)') do |msg|
+        options[:stop] = true
         options[:stop_error] = msg
       end
       opts.on('--stop-checkmark', 'When stopping, include a success checkmark') { options[:stop_checkmark] = true }
@@ -457,6 +520,11 @@ module WormCLI
         RubyProgress::Daemon.stop_daemon_by_pid_file(file)
         exit
       end
+
+      opts.separator ''
+      opts.separator 'Daemon notes:'
+      opts.separator '  - Do not append &; prg detaches itself and returns immediately.'
+      opts.separator '  - Use --daemon-as NAME for named daemons, or --stop-id/--status-id for named control.'
 
       opts.separator ''
       opts.separator 'General:'
@@ -474,7 +542,291 @@ module WormCLI
 
     options
   end
+end
 
+# Twirl CLI - spinner-based progress indicator
+module TwirlCLI
+  def self.run
+    options = parse_cli_options
+
+    if options[:status]
+      pid_file = resolve_pid_file(options, :status_name)
+      RubyProgress::Daemon.show_status(pid_file)
+      exit
+    elsif options[:stop]
+      pid_file = resolve_pid_file(options, :stop_name)
+      stop_msg = options[:stop_error] || options[:stop_success]
+      is_error = !options[:stop_error].nil?
+      RubyProgress::Daemon.stop_daemon_by_pid_file(
+        pid_file,
+        message: stop_msg,
+        checkmark: options[:stop_checkmark],
+        error: is_error
+      )
+      exit
+    elsif options[:daemon]
+      PrgCLI.daemonize
+      run_daemon_mode(options)
+    elsif options[:command]
+      run_with_command(options)
+    else
+      run_indefinitely(options)
+    end
+  end
+
+  def self.run_with_command(options)
+    message = options[:message] || 'Processing'
+    captured_output = nil
+
+    spinner = TwirlSpinner.new(message, options)
+    success = false
+
+    begin
+      RubyProgress::Utils.hide_cursor
+      spinner_thread = Thread.new { spinner.animate }
+
+      captured_output = `#{options[:command]} 2>&1`
+      success = $CHILD_STATUS.success?
+
+      spinner_thread.kill
+      RubyProgress::Utils.clear_line
+    ensure
+      RubyProgress::Utils.show_cursor
+    end
+
+    puts captured_output if options[:stdout]
+
+    if options[:success] || options[:error] || options[:checkmark]
+      final_msg = success ? options[:success] : options[:error]
+      final_msg ||= success ? 'Success' : 'Failed'
+
+      RubyProgress::Utils.display_completion(
+        final_msg,
+        success: success,
+        show_checkmark: options[:checkmark]
+      )
+    end
+
+    exit success ? 0 : 1
+  end
+
+  def self.run_indefinitely(options)
+    message = options[:message] || 'Processing'
+    spinner = TwirlSpinner.new(message, options)
+
+    begin
+      RubyProgress::Utils.hide_cursor
+      loop { spinner.animate }
+    ensure
+      RubyProgress::Utils.show_cursor
+      if options[:success] || options[:checkmark]
+        RubyProgress::Utils.display_completion(
+          options[:success] || 'Complete',
+          success: true,
+          show_checkmark: options[:checkmark]
+        )
+      end
+    end
+  end
+
+  def self.run_daemon_mode(options)
+    pid_file = resolve_pid_file(options, :daemon_name)
+    FileUtils.mkdir_p(File.dirname(pid_file))
+    File.write(pid_file, Process.pid.to_s)
+
+    message = options[:message] || 'Processing'
+    spinner = TwirlSpinner.new(message, options)
+    stop_requested = false
+
+    Signal.trap('INT') { stop_requested = true }
+    Signal.trap('USR1') { stop_requested = true }
+    Signal.trap('TERM') { stop_requested = true }
+    Signal.trap('HUP') { stop_requested = true }
+
+    begin
+      RubyProgress::Utils.hide_cursor
+      spinner.animate until stop_requested
+    ensure
+      RubyProgress::Utils.clear_line
+      RubyProgress::Utils.show_cursor
+
+      # Check for control message
+      cmf = RubyProgress::Daemon.control_message_file(pid_file)
+      if File.exist?(cmf)
+        begin
+          data = JSON.parse(File.read(cmf))
+          message = data['message']
+          check = data.key?('checkmark') ? data['checkmark'] : false
+          success_val = data.key?('success') ? data['success'] : true
+          if message
+            RubyProgress::Utils.display_completion(
+              message,
+              success: success_val,
+              show_checkmark: check,
+              output_stream: :stdout
+            )
+          end
+        rescue StandardError
+          # ignore
+        ensure
+          begin
+            File.delete(cmf)
+          rescue StandardError
+            nil
+          end
+        end
+      end
+
+      File.delete(pid_file) if File.exist?(pid_file)
+    end
+  end
+
+  def self.resolve_pid_file(options, name_key)
+    return options[:pid_file] if options[:pid_file]
+
+    if options[name_key]
+      "/tmp/ruby-progress/#{options[name_key]}.pid"
+    else
+      RubyProgress::Daemon.default_pid_file
+    end
+  end
+
+  def self.parse_cli_options
+    options = {}
+
+    OptionParser.new do |opts|
+      opts.banner = 'Usage: prg twirl [options]'
+      opts.separator ''
+      opts.separator 'Animation Options:'
+
+      opts.on('-s', '--speed SPEED', 'Animation speed (1-10, fast/medium/slow, or f/m/s)') do |speed|
+        options[:speed] = speed
+      end
+
+      opts.on('-m', '--message MESSAGE', 'Message to display before spinner') do |message|
+        options[:message] = message
+      end
+
+      opts.on('--style STYLE', 'Spinner style (see --list-styles for options)') do |style|
+        options[:style] = style.to_sym
+      end
+
+      opts.separator ''
+      opts.separator 'Command Execution:'
+
+      opts.on('-c', '--command COMMAND', 'Command to run (optional - runs indefinitely without)') do |command|
+        options[:command] = command
+      end
+
+      opts.on('--success MESSAGE', 'Success message to display') do |text|
+        options[:success] = text
+      end
+
+      opts.on('--error MESSAGE', 'Error message to display') do |text|
+        options[:error] = text
+      end
+
+      opts.on('--checkmark', 'Show checkmarks (✅ success, 🛑 failure)') do
+        options[:checkmark] = true
+      end
+
+      opts.on('--stdout', 'Output captured command result to STDOUT') do
+        options[:stdout] = true
+      end
+
+      opts.separator ''
+      opts.separator 'Daemon Mode:'
+
+      opts.on('--daemon', 'Run in background daemon mode') do
+        options[:daemon] = true
+      end
+
+      opts.on('--daemon-as NAME', 'Run in daemon mode with custom name (creates /tmp/ruby-progress/NAME.pid)') do |name|
+        options[:daemon] = true
+        options[:daemon_name] = name
+      end
+
+      opts.on('--pid-file FILE', 'Write process ID to file (default: /tmp/ruby-progress/progress.pid)') do |file|
+        options[:pid_file] = file
+      end
+
+      opts.on('--stop', 'Stop daemon (uses default PID file unless --pid-file specified)') do
+        options[:stop] = true
+      end
+      opts.on('--stop-id NAME', 'Stop daemon by name (automatically implies --stop)') do |name|
+        options[:stop] = true
+        options[:stop_name] = name
+      end
+      opts.on('--status', 'Show daemon status (uses default PID file unless --pid-file specified)') do
+        options[:status] = true
+      end
+      opts.on('--status-id NAME', 'Show daemon status by name') do |name|
+        options[:status] = true
+        options[:status_name] = name
+      end
+      opts.on('--stop-success MESSAGE', 'Stop daemon with success message (automatically implies --stop)') do |msg|
+        options[:stop] = true
+        options[:stop_success] = msg
+      end
+      opts.on('--stop-error MESSAGE', 'Stop daemon with error message (automatically implies --stop)') do |msg|
+        options[:stop] = true
+        options[:stop_error] = msg
+      end
+      opts.on('--stop-checkmark', 'When stopping, include a success checkmark') { options[:stop_checkmark] = true }
+
+      opts.separator ''
+      opts.separator 'Daemon notes:'
+      opts.separator '  - Do not append &; prg detaches itself and returns immediately.'
+      opts.separator '  - Use --daemon-as NAME for named daemons, or --stop-id/--status-id for named control.'
+
+      opts.separator ''
+      opts.separator 'General:'
+
+      opts.on('-v', '--version', 'Show version') do
+        puts "Twirl version #{RubyProgress::VERSION}"
+        exit
+      end
+
+      opts.on('-h', '--help', 'Show this help') do
+        puts opts
+        exit
+      end
+    end.parse!
+
+    options
+  end
+end
+
+# Simple spinner class for Twirl
+class TwirlSpinner
+  def initialize(message, options = {})
+    @message = message
+    @style = options[:style] || :dots
+    @speed = parse_speed(options[:speed] || 'medium')
+    @frames = RubyProgress::INDICATORS[@style] || RubyProgress::INDICATORS[:dots]
+    @index = 0
+  end
+
+  def animate
+    print "\r#{@message} #{@frames[@index]}"
+    @index = (@index + 1) % @frames.length
+    sleep @speed
+  end
+
+  private
+
+  def parse_speed(speed)
+    case speed.to_s.downcase
+    when /^f/, '1', '2', '3'
+      0.05
+    when /^m/, '4', '5', '6', '7'
+      0.1
+    when /^s/, '8', '9', '10'
+      0.2
+    else
+      speed.to_f > 0 ? (1.0 / speed.to_f) : 0.1
+    end
+  end
 end
 
 PrgCLI.run if __FILE__ == $PROGRAM_NAME
