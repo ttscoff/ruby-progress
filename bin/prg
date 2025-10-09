@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'ruby-progress'
+require_relative '../lib/ruby-progress'
 require 'fileutils'
 require 'optparse'
 require 'json'

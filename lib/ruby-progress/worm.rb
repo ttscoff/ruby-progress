@@ -35,7 +35,7 @@ module RubyProgress
 
     def initialize(options = {})
       @length = options[:length] || 3
-      @message = options[:message] || 'Processing'
+      @message = options[:message]
       @speed = parse_speed(options[:speed] || 'medium')
       @style = parse_style(options[:style] || 'circles')
       @command = options[:command]
@@ -206,7 +206,8 @@ module RubyProgress
       @position ||= 0
       @direction ||= 1
 
-      print "\r#{@message}#{generate_dots(@position, @direction)}"
+      message_part = @message && !@message.empty? ? @message : ''
+      print "\r#{message_part}#{generate_dots(@position, @direction)}"
       $stdout.flush
 
       sleep @speed
@@ -281,7 +282,8 @@ module RubyProgress
       direction = 1
 
       while @running
-        print "\r#{@message}#{generate_dots(position, direction)}"
+        message_part = @message && !@message.empty? ? @message : ''
+        print "\r#{message_part}#{generate_dots(position, direction)}"
         $stdout.flush
 
         sleep @speed
