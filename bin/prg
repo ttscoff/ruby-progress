@@ -581,7 +581,7 @@ module TwirlCLI
 
     begin
       RubyProgress::Utils.hide_cursor
-      spinner_thread = Thread.new { spinner.animate }
+      spinner_thread = Thread.new { loop { spinner.animate } }
 
       captured_output = `#{options[:command]} 2>&1`
       success = $CHILD_STATUS.success?
