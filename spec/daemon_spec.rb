@@ -27,7 +27,7 @@ RSpec.describe RubyProgress::Daemon do
 
   describe '.control_message_file' do
     it 'derives a .msg file path next to the pid file' do
-  expect(control_file).to eq("#{pid_file}.msg")
+      expect(control_file).to eq("#{pid_file}.msg")
     end
   end
 

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-10-09
+
+### Added
+
+- **New Twirl subcommand**: Extracted spinner functionality into dedicated `prg twirl` subcommand with 35+ spinner styles
+- **Enhanced daemon management**: Added `--daemon-as NAME` for named daemon instances creating `/tmp/ruby-progress/NAME.pid`
+- **Simplified daemon control**: Added `--stop-id NAME` and `--status-id NAME` for controlling named daemons
+- **Automatic flag implications**: `--stop-success`, `--stop-error`, and `--stop-id` now automatically imply `--stop`
+- **Global style listing**: Added `prg --list-styles` to show all available styles across all subcommands
+- **Unified style system**: Replaced ripple's `--rainbow` and `--inverse` flags with `--style` argument supporting `--style rainbow,inverse`
+
+### Changed
+
+- **Refactored CLI architecture**: Three-subcommand structure (ripple, worm, twirl) with consistent daemon management
+- **Improved option parsing**: Eliminated OptionParser ambiguities by using explicit `--stop-id`/`--status-id` instead of optional arguments
+- **Updated documentation**: Comprehensive README updates with new examples and cleaner daemon workflow syntax
+- **Enhanced gemspec**: Updated description from "Two different animated progress indicators" to "Animated progress indicators"
+
+### Deprecated
+
+- **Ripple spinner flags**: `--spinner`, `--rainbow`, and `--inverse` flags deprecated in favor of unified `--style` system (backward compatibility maintained)
+
+### Fixed
+
+- **OptionParser conflicts**: Resolved parsing issues with optional arguments that could consume following flags
+- **Daemon workflow**: Streamlined daemon start/stop workflow eliminating need for redundant flag combinations
+
 ## [1.0.1] - 2025-01-01
 
 ## [1.1.0] - 2025-10-09
@@ -61,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for custom speeds, messages, and styling options
 - Integration with system commands and process monitoring
 
+[1.1.1]: https://github.com/ttscoff/ruby-progress/releases/tag/v1.1.1
 [1.1.0]: https://github.com/ttscoff/ruby-progress/releases/tag/v1.1.0
 [1.0.1]: https://github.com/ttscoff/ruby-progress/releases/tag/v1.0.1
 [1.0.0]: https://github.com/ttscoff/ruby-progress/releases/tag/v1.0.0

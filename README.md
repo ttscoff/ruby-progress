@@ -6,11 +6,11 @@
 [![Ruby](https://img.shields.io/badge/ruby-%3E%3D%202.5.0-ruby.svg)](https://www.ruby-lang.org/)
 [![Coverage Status](https://img.shields.io/badge/coverage-55%25-yellow.svg)](#)
 
-This repository contains two different Ruby progress indicator projects: **Ripple** and **Worm**. Both provide animated terminal progress indicators with different visual styles and features.
+This repository contains three different Ruby progress indicator projects: **Ripple**, **Worm**, and **Twirl**. All provide animated terminal progress indicators with different visual styles and features.
 
 ## Unified Interface
 
-The gem provides a unified `prg` command that supports both progress indicators through subcommands:
+The gem provides a unified `prg` command that supports all progress indicators through subcommands:
 
 ```bash
 # Install the gem
@@ -20,17 +20,22 @@ gem install ruby-progress
 prg worm --message "Processing data" --style blocks --checkmark
 
 # Use ripple-style animation
-prg ripple "Loading..." --rainbow --speed fast
+prg ripple "Loading..." --style rainbow --speed fast
+
+# Use twirl spinner animation
+prg twirl --message "Working..." --style dots --speed fast
 
 # With command execution
 prg worm --command "sleep 5" --success "Completed!" --error "Failed!" --checkmark
 prg ripple "Building..." --command "make build" --success "Build complete!" --stdout
+prg twirl --command "npm install" --message "Installing packages" --style arc
 ```
 
 ### Global Options
 
 - `prg --help` - Show main help
 - `prg --version` - Show version info
+- `prg --list-styles` - Show all available styles for all subcommands
 - `prg <subcommand> --help` - Show specific subcommand help
 
 ### Common Options (available for both subcommands)
@@ -45,31 +50,39 @@ prg ripple "Building..." --command "make build" --success "Build complete!" --st
 
 ### Daemon Mode (Background Progress)
 
-For shell scripts where you need a continuous progress indicator across multiple steps, use daemon mode. A default PID file is used if you don't specify one: `/tmp/ruby-progress/progress.pid`.
+For shell scripts where you need a continuous progress indicator across multiple steps, use daemon mode. You can use named daemons or custom PID files.
 
 ```bash
 # Start in background (uses default PID file)
-prg worm --daemon --message "Working..." &
+prg worm --daemon --message "Working..."
+
+# Start with a custom name (creates /tmp/ruby-progress/NAME.pid)
+prg worm --daemon-as mytask --message "Processing data..."
 
 # ... run your tasks ...
 
-# Stop with a success message and checkmark
-prg worm --stop --stop-success "All done" --stop-checkmark
+# Stop with a success message and checkmark (--stop-success implies --stop)
+prg worm --stop-success "All done" --stop-checkmark
+
+# Stop a named daemon (--stop-id implies --stop)
+prg worm --stop-id mytask --stop-success "Task complete!" --stop-checkmark
 
 # Or stop with an error message and checkmark
-prg worm --stop --stop-error "Failed during step" --stop-checkmark
+prg worm --stop-error "Failed during step" --stop-checkmark
 
 # Check status at any time
 prg worm --status
+prg worm --status-id mytask
 
-# Use a custom PID file
-prg worm --daemon --pid-file /tmp/custom-progress.pid &
+# Use a completely custom PID file path
+prg worm --daemon --pid-file /tmp/custom-progress.pid
 prg worm --status --pid-file /tmp/custom-progress.pid
-prg worm --stop --pid-file /tmp/custom-progress.pid --stop-success "Complete"
+prg worm --stop-success "Complete" --pid-file /tmp/custom-progress.pid
 ```
 
 Notes:
 
+- The CLI detaches itself (double-fork); do not append `&`. This prevents shell job notifications like “job … has ended.” The command returns immediately.
 - `--stop-success` and `--stop-error` are mutually exclusive; whichever you provide determines the success state and icon if `--stop-checkmark` is set.
 - The indicator clears its line on shutdown and prints the final message to STDOUT.
 - `--stop-pid` is still supported for backward compatibility, but `--stop [--pid-file FILE]` is preferred.
@@ -81,18 +94,25 @@ Notes:
     - [Global Options](#global-options)
     - [Common Options (available for both subcommands)](#common-options-available-for-both-subcommands)
     - [Daemon Mode (Background Progress)](#daemon-mode-background-progress)
+  - [Table of Contents](#table-of-contents)
   - [Ripple](#ripple)
     - [Ripple Features](#ripple-features)
     - [Ripple Usage](#ripple-usage)
-      - [Command Line](#command-line)
+      - [Ripple CLI examples](#ripple-cli-examples)
       - [Ripple Command Line Options](#ripple-command-line-options)
     - [Ripple Library Usage](#ripple-library-usage)
-    - [Available Spinners](#available-spinners)
+  - [Twirl](#twirl)
+    - [Twirl Features](#twirl-features)
+    - [Twirl Usage](#twirl-usage)
+      - [Command Line](#command-line)
+      - [Twirl Command Line Options](#twirl-command-line-options)
+    - [Available Spinner Styles](#available-spinner-styles)
   - [Worm](#worm)
     - [Worm Features](#worm-features)
     - [Worm Usage](#worm-usage)
-    - [Worm CLI examples](#worm-cli-examples)
-    - [Worm Command Line Options](#worm-command-line-options)
+      - [Command Line](#command-line-1)
+      - [Daemon mode (background indicator)](#daemon-mode-background-indicator)
+      - [Worm Command Line Options](#worm-command-line-options)
     - [Worm Library Usage](#worm-library-usage)
     - [Animation Styles](#animation-styles)
       - [Circles](#circles)
@@ -100,6 +120,12 @@ Notes:
       - [Geometric](#geometric)
   - [Requirements](#requirements)
   - [Installation](#installation)
+    - [As a Gem (Recommended)](#as-a-gem-recommended)
+    - [From Source](#from-source)
+    - [Development](#development)
+  - [Universal Utilities](#universal-utilities)
+    - [Terminal Control](#terminal-control)
+    - [Completion Messages](#completion-messages)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -112,30 +138,29 @@ Ripple is a sophisticated text animation library that creates ripple effects acr
 ### Ripple Features
 
 - **Text ripple animations** with customizable speed and direction
-- **Rainbow color effects** that cycle through colors
-- **30+ built-in spinner styles** (dots, arrows, blocks, etc.)
+- **Style system** supporting rainbow colors and inverse highlighting
 - **Multiple animation formats**: forward-only, bidirectional
 - **Command execution** with animated progress display
 - **Custom success/failure messages** with optional checkmarks
 - **Case transformation modes** (uppercase/lowercase rippling)
-- **Inverse highlighting** for different visual effects
+- **Composable styles** using comma-separated values
 
 ### Ripple Usage
 
-#### Worm CLI examples
+#### Ripple CLI examples
 
 ```bash
 # Basic text animation
-./ripple "Loading..."
+prg ripple "Loading..."
 
-# With options
-./ripple "Processing Data" --speed fast --rainbow --direction bidirectional
+# With style options
+prg ripple "Processing Data" --speed fast --style rainbow --direction bidirectional
+
+# Multiple styles combined
+prg ripple "Loading..." --style rainbow,inverse
 
 # Run a command with progress animation
-./ripple "Installing packages" --command "sleep 5" --success "Installation complete!" --checkmark
-
-# Use a spinner instead of text ripple
-./ripple "Working" --spinner dots --spinner-pos before
+prg ripple "Installing packages" --command "sleep 5" --success "Installation complete!" --checkmark
 ```
 
 #### Ripple Command Line Options
@@ -143,9 +168,9 @@ Ripple is a sophisticated text animation library that creates ripple effects acr
 | Option                  | Description                                                   |
 | ----------------------- | ------------------------------------------------------------- |
 | `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)            |
-| `-l, --length LENGTH`   | Number of dots to display                                     |
+| `-d, --direction DIR`   | Animation direction (forward/bidirectional or f/b)            |
 | `-m, --message MESSAGE` | Message to display before animation                           |
-| `--style STYLE`         | Animation style (blocks/geometric/circles or b/g/c)           |
+| `--style STYLES`        | Visual styles (rainbow, inverse, or rainbow,inverse)          |
 | `-c, --command COMMAND` | Command to run (optional - runs indefinitely without command) |
 | `--success TEXT`        | Text to display on successful completion                      |
 | `--error TEXT`          | Text to display on error                                      |
@@ -179,19 +204,80 @@ end
 RubyProgress::Ripple.show_cursor
 ```
 
-### Available Spinners
+---
 
-Ripple includes 30+ different spinner styles:
+## Twirl
 
-- **Classic**: `|`, `/`, `—`, `\`
-- **Dots**: Various braille dot patterns (dots, dots_2, dots_3, etc.)
-- **Arrows**: Arrow patterns and pulsing arrows
-- **Blocks**: Block characters in different patterns
-- **Geometric**: Circles, triangles, arcs
-- **Progress bars**: Bounce, push, pulse effects
+Twirl is a lightweight spinner animation system providing over 35 different spinner styles for terminal progress indication. It's perfect for showing indefinite progress during command execution.
+
+### Twirl Features
+
+- **35+ spinner styles** including dots, arrows, blocks, and geometric patterns
+- **Flexible speed control** (1-10 scale or named speeds)
+- **Command execution** with animated progress display
+- **Daemon mode** for background progress indication
+- **Custom success/failure messages** with optional checkmarks
+- **Signal handling** for graceful shutdown and status updates
+
+### Twirl Usage
+
+#### Command Line
+
+```bash
+# Basic spinner animation
+prg twirl --message "Processing..." --style dots
+
+# With command execution
+prg twirl --command "npm install" --message "Installing" --style arc
+
+# Different spinner styles
+prg twirl --message "Working" --style arrows --speed fast
+prg twirl --message "Loading" --style blocks --speed slow
+
+# With success/error handling
+prg twirl --command "make build" --success "Build complete!" --error "Build failed!" --checkmark
+
+# Daemon mode for background tasks
+prg twirl --daemon --message "Background processing" --style geometric
+prg twirl --daemon-as mytask --message "Named task" --style dots
+
+# ... do other work ...
+prg twirl --stop-success "Processing complete!"
+prg twirl --stop-id mytask --stop-success "Task finished!"
+```
+
+#### Twirl Command Line Options
+
+| Option                  | Description                                                   |
+| ----------------------- | ------------------------------------------------------------- |
+| `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)            |
+| `-m, --message MESSAGE` | Message to display before spinner                             |
+| `--style STYLE`         | Spinner style (see --list-styles for all options)             |
+| `-c, --command COMMAND` | Command to run (optional - runs indefinitely without command) |
+| `--success TEXT`        | Text to display on successful completion                      |
+| `--error TEXT`          | Text to display on error                                      |
+| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)                |
+| `--stdout`              | Output captured command result to STDOUT                      |
+| `--daemon`              | Run in background daemon mode                                 |
+| `--daemon-as NAME`      | Run in daemon mode with custom name                           |
+| `--stop`                | Stop a running daemon                                         |
+| `--stop-id NAME`        | Stop daemon by name (implies --stop)                          |
+| `--status`              | Check daemon status                                           |
+| `--status-id NAME`      | Check daemon status by name                                   |
+
+### Available Spinner Styles
+
+Twirl includes over 35 different spinner animations:
+
+- **Dots**: `dots`, `dots_2`, `dots_3`, `dots_pulse`, `dots_scrolling`
+- **Arrows**: `arrow`, `arrow_pulse`, `arrows`, `arrows_2`
+- **Blocks**: `blocks`, `blocks_2`, `toggle`, `toggle_2`
+- **Lines**: `line`, `line_2`, `pipe`, `vertical_bar`
+- **Geometric**: `arc`, `circle`, `triangle`, `square_corners`
+- **Classic**: `classic`, `bounce`, `push`, `flip`
 - **And many more!**
 
-Use `./ripple --list-spinners` to see all available options.
+Use `prg --list-styles` to see all available spinner options with live previews.
 
 ---
 
@@ -242,7 +328,7 @@ Run the worm indicator as a background daemon and stop it later (useful in shell
 
 ```bash
 # Start in the background (default PID file: /tmp/ruby-progress/progress.pid)
-prg worm --daemon &
+prg worm --daemon
 
 # ... run your tasks ...
 
@@ -250,13 +336,15 @@ prg worm --daemon &
 prg worm --stop
 
 # Use a custom PID file
-prg worm --daemon --pid-file /tmp/custom-worm.pid &
+prg worm --daemon --pid-file /tmp/custom-worm.pid
 
 # Stop using the matching custom PID file
 prg worm --stop --pid-file /tmp/custom-worm.pid
 ```
 
 Stopping clears the progress line for clean output. You can also provide a success message and checkmark while stopping by sending SIGUSR1; the CLI handles cleanup automatically.
+
+Note: You don’t need `&` when starting the daemon. The command detaches itself and returns right away, which also avoids “job … has ended” messages from your shell.
 
 #### Worm Command Line Options
 
@@ -406,7 +494,7 @@ RubyProgress::Utils.complete_with_clear(
 )
 ```
 
-These utilities are used internally by both Ripple and Worm classes and are available for use in your own applications.
+These utilities are used internally by Ripple, Worm, and Twirl classes and are available for use in your own applications.
 
 ## Contributing
 

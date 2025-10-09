@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ['me@brettterpstra.com']
 
   spec.summary = 'Animated terminal progress indicators'
-  spec.description = 'Two different animated progress indicators for Ruby: Ripple (text ripple effects) and Worm (Unicode wave animations)'
+  spec.description = 'Animated progress indicators for Ruby: Ripple (text ripple effects), Worm (Unicode wave animations), and Twirl (spinner indicators)'
   spec.homepage = 'https://github.com/ttscoff/ruby-progress'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 2.5.0'
@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
     end
   end
   spec.bindir = 'bin'
-  spec.executables = %w[prg ripple worm]
+  spec.executables = %w[prg ripple worm twirl]
   spec.require_paths = ['lib']
 
   # Runtime dependencies
