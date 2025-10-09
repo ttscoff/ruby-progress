@@ -1,0 +1,80 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../lib/ruby-progress'
+require 'optparse'
+
+# Worm CLI implementation
+module WormCLI
+  def self.run
+    options = parse_cli_options
+    progress = RubyProgress::Worm.new(options)
+
+    if options[:command]
+      progress.run_with_command
+    else
+      # Run indefinitely like ripple does when no command is specified
+      progress.run_indefinitely
+    end
+  end
+
+  def self.parse_cli_options
+    options = {}
+
+    OptionParser.new do |opts|
+      opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
+      opts.separator ''
+      opts.separator 'Options:'
+
+      opts.on('-s', '--speed SPEED', 'Animation speed (1-10, fast, medium, slow, or f/m/s)') do |speed|
+        options[:speed] = speed
+      end
+
+      opts.on('-l', '--length LENGTH', Integer, 'Number of dots to display') do |length|
+        options[:length] = length
+      end
+
+      opts.on('-m', '--message MESSAGE', 'Message to display before dots') do |message|
+        options[:message] = message
+      end
+
+      opts.on('--style STYLE', 'Animation style (blocks, geometric, circles, or b/g/c)') do |style|
+        options[:style] = style
+      end
+
+      opts.on('-c', '--command COMMAND', 'Command to run (optional - runs indefinitely without command)') do |command|
+        options[:command] = command
+      end
+
+      opts.on('--success TEXT', 'Text to display on successful completion') do |text|
+        options[:success] = text
+      end
+
+      opts.on('--error TEXT', 'Text to display on error') do |text|
+        options[:error] = text
+      end
+
+      opts.on('--checkmark', 'Show checkmarks (✅/🛑) in completion messages') do
+        options[:checkmark] = true
+      end
+
+      opts.on('--stdout', 'Output captured command result to STDOUT') do
+        options[:stdout] = true
+      end
+
+      opts.on('-h', '--help', 'Show this help message') do
+        puts opts
+        exit
+      end
+
+      opts.on('-v', '--version', 'Display the version') do
+        puts "Worm version #{RubyProgress::VERSION}"
+        exit
+      end
+    end.parse!
+
+    options
+  end
+end
+
+WormCLI.run if __FILE__ == $PROGRAM_NAME

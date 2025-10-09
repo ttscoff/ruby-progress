@@ -11,7 +11,7 @@ class Worm
     'circles' => {
       baseline: '·',  # middle dot
       midline: '●',   # black circle
-      peak: '⬤'      # large circle
+      peak: '⬤' # large circle
     },
     'blocks' => {
       baseline: '▁',  # lower eighth block
@@ -40,6 +40,8 @@ class Worm
     @command = options[:command]
     @success_text = options[:success]
     @error_text = options[:error]
+    @show_checkmark = options[:checkmark] || false
+    @output_stdout = options[:stdout] || false
     @running = false
   end
 
@@ -50,8 +52,8 @@ class Worm
     if options[:command]
       progress.run_with_command
     else
-      puts 'Error: No command specified. Use --command to specify a command to run.'
-      exit 1
+      # Run indefinitely like ripple does when no command is specified
+      progress.run_indefinitely
     end
   end
 
@@ -81,7 +83,7 @@ class Worm
         @running = false
         animation_thread.join
         clear_line
-        puts(@success_text || 'Done!')
+        display_completion_message(@success_text || 'Done!', true)
         result
       else
         animation_thread.join
@@ -90,8 +92,8 @@ class Worm
       @running = false
       animation_thread.join
       clear_line
-      puts(@error_text || "Error: #{e.message}")
-      raise
+      display_completion_message(@error_text || "Error: #{e.message}", false)
+      nil # Return nil instead of re-raising when used as a progress indicator
     ensure
       # Always restore cursor and signal handler
       show_cursor
@@ -103,12 +105,14 @@ class Worm
     return unless @command
 
     exit_code = 0
+    stdout_content = nil
+
     begin
-      animate do
+      stdout_content = animate do
         # Use popen3 instead of capture3 for better signal handling
         Open3.popen3(@command) do |stdin, stdout, stderr, wait_thr|
           stdin.close
-          stdout_content = stdout.read
+          captured_stdout = stdout.read
           stderr_content = stderr.read
           exit_code = wait_thr.value.exitstatus
 
@@ -117,15 +121,39 @@ class Worm
             error_msg += ": #{stderr_content.strip}" if stderr_content && !stderr_content.empty?
             raise StandardError, error_msg
           end
-          stdout_content
+          captured_stdout
         end
       end
+
+      # Output to stdout if --stdout flag is set
+      puts stdout_content if @output_stdout && stdout_content
     rescue StandardError => e
-      puts e.message unless @error_text # Only show error details if no custom error message
+      # animate method handles error display, just exit with proper code
       exit exit_code.nonzero? || 1
     rescue Interrupt
       puts "\nInterrupted!"
       exit 130
+    end
+  end
+
+  def run_indefinitely
+    # Set up interrupt handler to ensure cursor is restored
+    original_int_handler = Signal.trap('INT') do
+      @running = false
+      clear_line
+      show_cursor
+      puts "\nInterrupted!"
+      exit 130
+    end
+
+    @running = true
+    hide_cursor
+
+    begin
+      animation_loop
+    ensure
+      show_cursor
+      Signal.trap('INT', original_int_handler) if original_int_handler
     end
   end
 
@@ -134,6 +162,16 @@ class Worm
   end
 
   private
+
+  def display_completion_message(message, success)
+    RubyProgress::Utils.clear_line
+    RubyProgress::Utils.display_completion(
+      message,
+      success: success,
+      show_checkmark: @show_checkmark,
+      output_stream: :stdout
+    )
+  end
 
   def parse_speed(speed_input)
     case speed_input
@@ -211,8 +249,8 @@ class Worm
         # When moving right, midline appears to the left of peak
         if direction == -1 # moving left
           dots[i] = @style[:midline] if i > ripple_position
-        else # moving right
-          dots[i] = @style[:midline] if i < ripple_position
+        elsif i < ripple_position # moving right
+          dots[i] = @style[:midline]
         end
       else
         dots[i] = @style[:baseline]
@@ -239,38 +277,46 @@ class Worm
 
     OptionParser.new do |opts|
       opts.banner = "Usage: #{$0} [options]"
-      opts.separator ""
-      opts.separator "Options:"
+      opts.separator ''
+      opts.separator 'Options:'
 
-      opts.on("-s", "--speed SPEED", "Animation speed (1-10, fast, medium, slow, or f/m/s)") do |speed|
+      opts.on('-s', '--speed SPEED', 'Animation speed (1-10, fast, medium, slow, or f/m/s)') do |speed|
         options[:speed] = speed
       end
 
-      opts.on("-l", "--length LENGTH", Integer, "Number of dots to display") do |length|
+      opts.on('-l', '--length LENGTH', Integer, 'Number of dots to display') do |length|
         options[:length] = length
       end
 
-      opts.on("-m", "--message MESSAGE", "Message to display before dots") do |message|
+      opts.on('-m', '--message MESSAGE', 'Message to display before dots') do |message|
         options[:message] = message
       end
 
-      opts.on("--style STYLE", "Animation style (blocks, geometric, circles, or b/g/c)") do |style|
+      opts.on('--style STYLE', 'Animation style (blocks, geometric, circles, or b/g/c)') do |style|
         options[:style] = style
       end
 
-      opts.on("-c", "--command COMMAND", "Command to run") do |command|
+      opts.on('-c', '--command COMMAND', 'Command to run (optional - runs indefinitely without command)') do |command|
         options[:command] = command
       end
 
-      opts.on("--success TEXT", "Text to display on successful completion") do |text|
+      opts.on('--success TEXT', 'Text to display on successful completion') do |text|
         options[:success] = text
       end
 
-      opts.on("--error TEXT", "Text to display on error") do |text|
+      opts.on('--error TEXT', 'Text to display on error') do |text|
         options[:error] = text
       end
 
-      opts.on("-h", "--help", "Show this help message") do
+      opts.on('--checkmark', 'Show checkmarks (✅/🛑) in completion messages') do
+        options[:checkmark] = true
+      end
+
+      opts.on('--stdout', 'Output captured command result to STDOUT') do
+        options[:stdout] = true
+      end
+
+      opts.on('-h', '--help', 'Show this help message') do
         puts opts
         exit
       end
@@ -281,6 +327,4 @@ class Worm
 end
 
 # Run as CLI if this file is executed directly
-if __FILE__ == $0
-  Worm.run_cli
-end
+Worm.run_cli if __FILE__ == $0
