@@ -12,18 +12,18 @@ RSpec.describe RubyProgress::Worm, 'integration tests' do
     end
 
     it 'handles exceptions in block' do
-      expect {
+      expect do
         worm.animate { raise StandardError, 'test error' }
-      }.not_to raise_error
+      end.not_to raise_error
     end
 
     it 'updates message when provided' do
-      worm.animate(message: 'New message') { }
+      worm.animate(message: 'New message') {}
       expect(worm.instance_variable_get(:@message)).to eq('New message')
     end
 
     it 'updates success and error text when provided' do
-      worm.animate(success: 'Success!', error: 'Failed!') { }
+      worm.animate(success: 'Success!', error: 'Failed!') {}
       expect(worm.instance_variable_get(:@success_text)).to eq('Success!')
       expect(worm.instance_variable_get(:@error_text)).to eq('Failed!')
     end
@@ -70,7 +70,7 @@ RSpec.describe RubyProgress::Worm, 'integration tests' do
       nil_worm.instance_variable_set(:@running, true)
       allow(nil_worm).to receive(:sleep)
       allow($stdout).to receive(:flush)
-      
+
       expect { nil_worm.send(:animation_loop_step) }.not_to raise_error
     end
 
@@ -79,7 +79,7 @@ RSpec.describe RubyProgress::Worm, 'integration tests' do
       empty_worm.instance_variable_set(:@running, true)
       allow(empty_worm).to receive(:sleep)
       allow($stdout).to receive(:flush)
-      
+
       expect { empty_worm.send(:animation_loop_step) }.not_to raise_error
     end
   end
@@ -90,7 +90,7 @@ RSpec.describe RubyProgress::Worm, 'integration tests' do
       allow(worm).to receive(:animation_loop)
       allow(RubyProgress::Utils).to receive(:hide_cursor)
       allow(RubyProgress::Utils).to receive(:show_cursor)
-      
+
       worm.run_indefinitely
     end
   end
@@ -99,9 +99,9 @@ RSpec.describe RubyProgress::Worm, 'integration tests' do
     it 'has all required style definitions' do
       styles = RubyProgress::Worm::RIPPLE_STYLES
       expect(styles).to have_key('circles')
-      expect(styles).to have_key('blocks') 
+      expect(styles).to have_key('blocks')
       expect(styles).to have_key('geometric')
-      
+
       # Each style should have baseline, midline, and peak
       styles.each do |name, style|
         expect(style).to have_key(:baseline), "#{name} missing baseline"

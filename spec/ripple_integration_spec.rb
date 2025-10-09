@@ -98,10 +98,10 @@ RSpec.describe RubyProgress::Ripple, 'integration tests' do
       # Start at index 0, advance to end (should be index 3 for "Test")
       initial_direction = ripple.instance_variable_get(:@direction)
       expect(initial_direction).to eq(:forward)
-      
+
       # Advance to the end
       4.times { ripple.advance }
-      
+
       # Should have changed direction by now
       final_direction = ripple.instance_variable_get(:@direction)
       expect(final_direction).to eq(:backward)
