@@ -34,7 +34,6 @@ task :bump_major do
   bump_version(:major)
 end
 
-# rubocop:disable Metrics/MethodLength, Metrics/AbcSize
 def bump_version(type)
   require_relative 'lib/ruby-progress/version'
   version_parts = RubyProgress::VERSION.split('.').map(&:to_i)
@@ -61,8 +60,6 @@ def bump_version(type)
 
   puts "Version bumped from #{RubyProgress::VERSION} to #{new_version}"
 end
-# rubocop:enable Metrics/MethodLength, Metrics/AbcSize
-
 # Package management
 desc 'Clean up generated files'
 task :clobber do
@@ -89,7 +86,6 @@ task :test_binaries do
 end
 
 # Markdown lint/fix tasks (no external deps)
-# rubocop:disable Metrics/BlockLength
 namespace :markdown do
   def markdown_files
     Dir.glob(MARKDOWN_GLOB).reject do |p|
@@ -105,7 +101,7 @@ namespace :markdown do
     !!(line =~ /^\s*```|^\s*~~~/)
   end
 
-  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def format_markdown(content)
     lines = content.split("\n", -1)
     out = []
@@ -164,7 +160,7 @@ namespace :markdown do
     out << '' if (last = out.last) && !last.empty?
     out.join("\n")
   end
-  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   desc 'Lint markdown (reports files that would be changed)'
   task :lint do
@@ -202,4 +198,3 @@ namespace :markdown do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength

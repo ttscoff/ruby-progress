@@ -353,7 +353,7 @@ module RippleCLI
         end
       end
 
-      File.delete(pid_file) if File.exist?(pid_file)
+      FileUtils.rm_f(pid_file)
     end
   end
 end
@@ -413,7 +413,7 @@ module WormCLI
       )
     ensure
       # Clean up PID file
-      File.delete(pid_file) if File.exist?(pid_file)
+      FileUtils.rm_f(pid_file)
     end
   end
 
@@ -675,7 +675,7 @@ module TwirlCLI
         end
       end
 
-      File.delete(pid_file) if File.exist?(pid_file)
+      FileUtils.rm_f(pid_file)
     end
   end
 

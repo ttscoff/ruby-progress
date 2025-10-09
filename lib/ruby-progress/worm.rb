@@ -240,7 +240,7 @@ module RubyProgress
         if speed_input.match?(/^\d+$/)
           # Numeric string (1-10)
           speed_num = speed_input.to_i
-          return 0.6 - (speed_num - 1) * 0.05 if speed_num.between?(1, 10)
+          return 0.6 - ((speed_num - 1) * 0.05) if speed_num.between?(1, 10)
         end
 
         # Check for abbreviated forms
@@ -256,7 +256,7 @@ module RubyProgress
         end
       when Numeric
         speed_num = speed_input.to_i
-        speed_num.between?(1, 10) ? 0.6 - (speed_num - 1) * 0.05 : SPEED_MAP['medium']
+        speed_num.between?(1, 10) ? 0.6 - ((speed_num - 1) * 0.05) : SPEED_MAP['medium']
       else
         SPEED_MAP['medium']
       end
