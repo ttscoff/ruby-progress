@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2025-10-09
+
+### Fixed
+
+- **Twirl spinner animation**: Fixed spinner freezing during command execution by ensuring continuous animation loop
+- **Default message behavior**: Removed default "Processing" message when no `--message` is provided - now shows only spinner
+- **Daemon termination output**: Removed verbose "Stop signal sent to process" message for cleaner daemon workflows
+
 ## [1.1.2] - 2025-10-09
 
 ### Fixed
