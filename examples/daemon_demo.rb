@@ -18,7 +18,7 @@ puts "PID file: #{pid_file}"
 puts
 
 # Clean up any existing PID file
-File.delete(pid_file) if File.exist?(pid_file)
+FileUtils.rm_f(pid_file)
 
 puts '1. Starting worm progress indicator in daemon mode...'
 bin_path = File.join(File.dirname(__dir__), 'bin', 'prg')

@@ -93,7 +93,7 @@ module RubyProgress
     end
 
     def rainbow(index = 0)
-      chars = split('')
+      chars = self.chars
       colored_chars = chars.map.with_index do |char, idx|
         color = COLORS.values[(idx + index) % COLORS.size]
         "#{color}#{char}#{COLORS['reset']}"
@@ -104,7 +104,7 @@ module RubyProgress
     def normalize_type
       spinner_type = :classic
       INDICATORS.each do |spinner, _v|
-        spinner_type = spinner if spinner =~ /^#{split('').join('.*?')}/i
+        spinner_type = spinner if spinner =~ /^#{chars.join('.*?')}/i
       end
       spinner_type
     end
@@ -137,7 +137,7 @@ module RubyProgress
     end
 
     def printout
-      letters = @string.dup.split('')
+      letters = @string.dup.chars
       i = @index
       if @spinner
         case @spinner_position

@@ -45,10 +45,10 @@ module RubyProgress
       begin
         Process.kill('USR1', pid)
         sleep 0.5
-        File.delete(pid_file) if File.exist?(pid_file)
+        FileUtils.rm_f(pid_file)
       rescue Errno::ESRCH
         puts "Process #{pid} not found (may have already stopped)"
-        File.delete(pid_file) if File.exist?(pid_file)
+        FileUtils.rm_f(pid_file)
         exit 1
       rescue Errno::EPERM
         puts "Permission denied sending signal to process #{pid}"
