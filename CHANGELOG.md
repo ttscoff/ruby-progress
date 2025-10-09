@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Automatic flag implications**: `--stop-success`, `--stop-error`, and `--stop-id` now automatically imply `--stop`
 - **Global style listing**: Added `prg --list-styles` to show all available styles across all subcommands
 - **Unified style system**: Replaced ripple's `--rainbow` and `--inverse` flags with `--style` argument supporting `--style rainbow,inverse`
+- **Integrated case transformation**: Converted `--caps` flag to `--style caps` for consistent style system, supports combinations like `--style caps,inverse`
 
 ### Changed
 
@@ -25,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- **Ripple spinner flags**: `--spinner`, `--rainbow`, and `--inverse` flags deprecated in favor of unified `--style` system (backward compatibility maintained)
+- **Ripple style flags**: `--spinner`, `--rainbow`, `--inverse`, and `--caps` flags deprecated in favor of unified `--style` system (backward compatibility maintained)
 
 ### Fixed
 
