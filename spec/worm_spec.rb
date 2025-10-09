@@ -13,7 +13,7 @@ RSpec.describe RubyProgress::Worm do
     it 'sets default options' do
       default_worm = described_class.new
       expect(default_worm.instance_variable_get(:@length)).to eq(3)
-      expect(default_worm.instance_variable_get(:@message)).to eq('Processing')
+      expect(default_worm.instance_variable_get(:@message)).to be_nil
     end
 
     it 'allows custom options' do
