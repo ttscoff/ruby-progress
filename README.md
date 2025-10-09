@@ -133,7 +133,7 @@ Notes:
 
 ## Ripple
 
-Ripple is a sophisticated text animation library that creates ripple effects across text strings in the terminal. It supports various animation modes including bidirectional movement, rainbow colors, spinners, and case transformations.
+Ripple is a sophisticated text animation library that creates ripple effects across text strings in the terminal. It supports various animation modes including bidirectional movement, and rainbow colors.
 
 ### Ripple Features
 
@@ -159,23 +159,26 @@ prg ripple "Processing Data" --speed fast --style rainbow --direction bidirectio
 # Multiple styles combined
 prg ripple "Loading..." --style rainbow,inverse
 
+# Case transformation mode
+prg ripple "Processing Text" --style caps,inverse
+
 # Run a command with progress animation
 prg ripple "Installing packages" --command "sleep 5" --success "Installation complete!" --checkmark
 ```
 
 #### Ripple Command Line Options
 
-| Option                  | Description                                                   |
-| ----------------------- | ------------------------------------------------------------- |
-| `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)            |
-| `-d, --direction DIR`   | Animation direction (forward/bidirectional or f/b)            |
-| `-m, --message MESSAGE` | Message to display before animation                           |
-| `--style STYLES`        | Visual styles (rainbow, inverse, or rainbow,inverse)          |
-| `-c, --command COMMAND` | Command to run (optional - runs indefinitely without command) |
-| `--success TEXT`        | Text to display on successful completion                      |
-| `--error TEXT`          | Text to display on error                                      |
-| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)                |
-| `--stdout`              | Output captured command result to STDOUT                      |
+| Option                  | Description                                                     |
+| ----------------------- | --------------------------------------------------------------- |
+| `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)              |
+| `-d, --direction DIR`   | Animation direction (forward/bidirectional or f/b)              |
+| `-m, --message MESSAGE` | Message to display before animation                             |
+| `--style STYLES`        | Visual styles (rainbow, inverse, caps - can be comma-separated) |
+| `-c, --command COMMAND` | Command to run (optional - runs indefinitely without command)   |
+| `--success TEXT`        | Text to display on successful completion                        |
+| `--error TEXT`          | Text to display on error                                        |
+| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)                  |
+| `--stdout`              | Output captured command result to STDOUT                        |
 
 ### Ripple Library Usage
 
@@ -277,7 +280,7 @@ Twirl includes over 35 different spinner animations:
 - **Classic**: `classic`, `bounce`, `push`, `flip`
 - **And many more!**
 
-Use `prg --list-styles` to see all available spinner options with live previews.
+Use `prg --list-styles` to see all available spinner options.
 
 ---
 

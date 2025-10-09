@@ -96,6 +96,7 @@ module PrgCLI
     puts '== ripple'
     puts 'rainbow'
     puts 'inverse'
+    puts 'caps'
     puts ''
     puts '== worm'
     puts 'circles'
@@ -148,16 +149,12 @@ module RippleCLI
         options[:message] = msg
       end
 
-      opts.on('--style STYLES', 'Animation styles (rainbow, inverse - can be comma-separated)') do |styles|
+      opts.on('--style STYLES', 'Animation styles (rainbow, inverse, caps - can be comma-separated)') do |styles|
         options[:styles] = styles.split(',').map(&:strip).map(&:to_sym)
       end
 
       opts.on('-d', '--direction DIRECTION', 'Animation direction (forward/bidirectional or f/b)') do |f|
         options[:format] = f =~ /^f/i ? :forward_only : :bidirectional
-      end
-
-      opts.on('--caps', 'Enable case transformation mode') do
-        options[:caps] = true
       end
 
       opts.separator ''
@@ -271,6 +268,7 @@ module RippleCLI
       # Convert styles array to individual flags for backward compatibility
       options[:rainbow] = options[:styles].include?(:rainbow)
       options[:inverse] = options[:styles].include?(:inverse)
+      options[:caps] = options[:styles].include?(:caps)
 
       if options[:command]
         run_with_command(text, options)
