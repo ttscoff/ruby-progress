@@ -827,4 +827,4 @@ class TwirlSpinner
   end
 end
 
-PrgCLI.run if __FILE__ == $PROGRAM_NAME
+PrgCLI.run
