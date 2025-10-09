@@ -573,7 +573,7 @@ module TwirlCLI
   end
 
   def self.run_with_command(options)
-    message = options[:message] || 'Processing'
+    message = options[:message]
     captured_output = nil
 
     spinner = TwirlSpinner.new(message, options)
@@ -609,7 +609,7 @@ module TwirlCLI
   end
 
   def self.run_indefinitely(options)
-    message = options[:message] || 'Processing'
+    message = options[:message]
     spinner = TwirlSpinner.new(message, options)
 
     begin
@@ -632,7 +632,7 @@ module TwirlCLI
     FileUtils.mkdir_p(File.dirname(pid_file))
     File.write(pid_file, Process.pid.to_s)
 
-    message = options[:message] || 'Processing'
+    message = options[:message]
     spinner = TwirlSpinner.new(message, options)
     stop_requested = false
 
@@ -806,7 +806,11 @@ class TwirlSpinner
   end
 
   def animate
-    print "\r#{@message} #{@frames[@index]}"
+    if @message && !@message.empty?
+      print "\r#{@message} #{@frames[@index]}"
+    else
+      print "\r#{@frames[@index]}"
+    end
     @index = (@index + 1) % @frames.length
     sleep @speed
   end
