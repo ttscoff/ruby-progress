@@ -9,6 +9,9 @@ RuboCop::RakeTask.new
 
 task default: %i[spec rubocop]
 
+# Used by markdown tasks
+MARKDOWN_GLOB = ['**/*.md'].freeze
+
 # Version management tasks
 desc 'Show current version'
 task :version do
@@ -31,6 +34,7 @@ task :bump_major do
   bump_version(:major)
 end
 
+# rubocop:disable Metrics/MethodLength, Metrics/AbcSize
 def bump_version(type)
   require_relative 'lib/ruby-progress/version'
   version_parts = RubyProgress::VERSION.split('.').map(&:to_i)
@@ -57,6 +61,7 @@ def bump_version(type)
 
   puts "Version bumped from #{RubyProgress::VERSION} to #{new_version}"
 end
+# rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
 # Package management
 desc 'Clean up generated files'
@@ -82,3 +87,119 @@ task :test_binaries do
   system('worm --version') || abort('worm binary test failed')
   puts 'Binary tests passed!'
 end
+
+# Markdown lint/fix tasks (no external deps)
+# rubocop:disable Metrics/BlockLength
+namespace :markdown do
+  def markdown_files
+    Dir.glob(MARKDOWN_GLOB).reject do |p|
+      p.start_with?('pkg/') || p.start_with?('coverage/') || p.start_with?('node_modules/')
+    end
+  end
+
+  def list_item?(line)
+    !!(line =~ /^\s*([-*+]\s+|\d+\.\s+)/)
+  end
+
+  def fence_delimiter?(line)
+    !!(line =~ /^\s*```|^\s*~~~/)
+  end
+
+  # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+  def format_markdown(content)
+    lines = content.split("\n", -1)
+    out = []
+    in_fence = false
+    i = 0
+    while i < lines.length
+      line = lines[i]
+
+      if fence_delimiter?(line)
+        in_fence = !in_fence
+        out << line
+        i += 1
+        next
+      end
+
+      if in_fence
+        out << line
+        i += 1
+        next
+      end
+
+      # Collapse multiple blank lines
+      if line.strip.empty?
+        prev = out.last
+        out << '' if prev && !prev.strip.empty?
+        i += 1
+        next
+      end
+
+      # Ensure blank line after headings
+      if line =~ /^\s*#+\s+/
+        out << line
+        nxt = lines[i + 1]
+        out << '' if nxt && !nxt.strip.empty? && !fence_delimiter?(nxt)
+        i += 1
+        next
+      end
+
+      # Ensure blank line before and after list blocks
+      if list_item?(line)
+        prev = out.last
+        out << '' unless prev.nil? || prev.strip.empty? || list_item?(prev)
+        while i < lines.length && list_item?(lines[i])
+          out << lines[i]
+          i += 1
+        end
+        after = lines[i]
+        out << '' if after && !after.strip.empty? && !fence_delimiter?(after)
+        next
+      end
+
+      out << line
+      i += 1
+    end
+
+    out << '' if (last = out.last) && !last.empty?
+    out.join("\n")
+  end
+  # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+  desc 'Lint markdown (reports files that would be changed)'
+  task :lint do
+    changed = []
+    markdown_files.each do |path|
+      original = File.read(path)
+      formatted = format_markdown(original)
+      changed << path if formatted != original
+    end
+    if changed.empty?
+      puts 'Markdown: no issues found.'
+    else
+      puts 'Markdown files needing formatting:'
+      changed.each { |p| puts "  - #{p}" }
+      abort 'Run: rake markdown:fix'
+    end
+  end
+
+  desc 'Auto-fix markdown spacing (headings, lists, blank lines)'
+  task :fix do
+    updated = []
+    markdown_files.each do |path|
+      original = File.read(path)
+      formatted = format_markdown(original)
+      next if formatted == original
+
+      File.write(path, formatted)
+      updated << path
+    end
+    if updated.empty?
+      puts 'Markdown: nothing to fix.'
+    else
+      puts 'Markdown updated:'
+      updated.each { |p| puts "  - #{p}" }
+    end
+  end
+end
+# rubocop:enable Metrics/BlockLength
