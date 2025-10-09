@@ -44,7 +44,6 @@ module RubyProgress
 
       begin
         Process.kill('USR1', pid)
-        puts "Stop signal sent to process #{pid}"
         sleep 0.5
         File.delete(pid_file) if File.exist?(pid_file)
       rescue Errno::ESRCH
