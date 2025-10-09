@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2025-10-09
+
+### Fixed
+
+- **Worm default message behavior**: Removed default "Processing" message from worm subcommand when no `--message` is provided for consistent behavior across all progress indicators
+- **Development environment**: Fixed `bin/prg` to use local library files instead of installed gem versions during development
+
 ## [1.1.3] - 2025-10-09
 
 ### Fixed
