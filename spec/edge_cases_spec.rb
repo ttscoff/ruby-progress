@@ -28,10 +28,10 @@ RSpec.describe 'Worm Error Handling' do
 
   it 'handles Interrupt during command execution' do
     command_worm = RubyProgress::Worm.new(command: 'echo "test"')
-    
+
     # Mock animate to raise Interrupt
     allow(command_worm).to receive(:animate).and_raise(Interrupt)
-    
+
     # Should handle Interrupt gracefully in run_with_command
     expect { command_worm.run_with_command }.to raise_error(SystemExit)
   end
