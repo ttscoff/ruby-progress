@@ -1,11 +1,84 @@
 # Ruby Progress Indicators
 
+[![Gem Version](https://badge.fury.io/rb/ruby-progress.svg)](https://badge.fury.io/rb/ruby-progress)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![RSpec Tests](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml/badge.svg)](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml)
+[![Ruby](https://img.shields.io/badge/ruby-%3E%3D%202.5.0-ruby.svg)](https://www.ruby-lang.org/)
+[![Coverage Status](https://img.shields.io/badge/coverage-55%25-yellow.svg)](#)
+
 This repository contains two different Ruby progress indicator projects: **Ripple** and **Worm**. Both provide animated terminal progress indicators with different visual styles and features.
+
+## Unified Interface
+
+The gem provides a unified `prg` command that supports both progress indicators through subcommands:
+
+```bash
+# Install the gem
+gem install ruby-progress
+
+# Use worm-style animation
+prg worm --message "Processing data" --style blocks --checkmark
+
+# Use ripple-style animation
+prg ripple "Loading..." --rainbow --speed fast
+
+# With command execution
+prg worm --command "sleep 5" --success "Completed!" --error "Failed!" --checkmark
+prg ripple "Building..." --command "make build" --success "Build complete!" --stdout
+```
+
+### Global Options
+- `prg --help` - Show main help
+- `prg --version` - Show version info
+- `prg <subcommand> --help` - Show specific subcommand help
+
+### Common Options (available for both subcommands)
+- `--speed SPEED` - Animation speed (fast/medium/slow or f/m/s)
+- `--message MESSAGE` - Message to display
+- `--command COMMAND` - Command to execute during animation
+- `--success MESSAGE` - Success message after completion
+- `--error MESSAGE` - Error message on failure
+- `--checkmark` - Show checkmarks (✅ success, 🛑 failure)
+- `--stdout` - Output command results to STDOUT
+
+### Daemon Mode (Background Progress)
+
+For shell scripts where you need a continuous progress indicator across multiple steps, use daemon mode. A default PID file is used if you don't specify one: `/tmp/ruby-progress/progress.pid`.
+
+```bash
+# Start in background (uses default PID file)
+prg worm --daemon --message "Working..." &
+
+# ... run your tasks ...
+
+# Stop with a success message and checkmark
+prg worm --stop --stop-success "All done" --stop-checkmark
+
+# Or stop with an error message and checkmark
+prg worm --stop --stop-error "Failed during step" --stop-checkmark
+
+# Check status at any time
+prg worm --status
+
+# Use a custom PID file
+prg worm --daemon --pid-file /tmp/custom-progress.pid &
+prg worm --status --pid-file /tmp/custom-progress.pid
+prg worm --stop --pid-file /tmp/custom-progress.pid --stop-success "Complete"
+```
+
+Notes:
+
+- `--stop-success` and `--stop-error` are mutually exclusive; whichever you provide determines the success state and icon if `--stop-checkmark` is set.
+- The indicator clears its line on shutdown and prints the final message to STDOUT.
+- `--stop-pid` is still supported for backward compatibility, but `--stop [--pid-file FILE]` is preferred.
 
 ## Table of Contents
 
 - [Ruby Progress Indicators](#ruby-progress-indicators)
-  - [Table of Contents](#table-of-contents)
+  - [Unified Interface](#unified-interface)
+    - [Global Options](#global-options)
+    - [Common Options (available for both subcommands)](#common-options-available-for-both-subcommands)
+    - [Daemon Mode (Background Progress)](#daemon-mode-background-progress)
   - [Ripple](#ripple)
     - [Ripple Features](#ripple-features)
     - [Ripple Usage](#ripple-usage)
@@ -16,8 +89,8 @@ This repository contains two different Ruby progress indicator projects: **Rippl
   - [Worm](#worm)
     - [Worm Features](#worm-features)
     - [Worm Usage](#worm-usage)
-      - [Command Line](#command-line-1)
-      - [Worm Command Line Options](#worm-command-line-options)
+    - [Worm CLI examples](#worm-cli-examples)
+    - [Worm Command Line Options](#worm-command-line-options)
     - [Worm Library Usage](#worm-library-usage)
     - [Animation Styles](#animation-styles)
       - [Circles](#circles)
@@ -47,7 +120,7 @@ Ripple is a sophisticated text animation library that creates ripple effects acr
 
 ### Ripple Usage
 
-#### Command Line
+#### Worm CLI examples
 
 ```bash
 # Basic text animation
@@ -65,48 +138,43 @@ Ripple is a sophisticated text animation library that creates ripple effects acr
 
 #### Ripple Command Line Options
 
-| Option                      | Description                                   |
-| --------------------------- | --------------------------------------------- |
-| `-s, --speed SPEED`         | Set animation speed (fast/medium/slow)        |
-| `-r, --rainbow`             | Enable rainbow color mode                     |
-| `-d, --direction DIRECTION` | Set animation format (forward/back-and-forth) |
-| `-i, --inverse`             | Enable inverse highlighting mode              |
-| `-c, --command COMMAND`     | Run a command during animation                |
-| `--success MESSAGE`         | Message to display on successful completion   |
-| `--fail MESSAGE`            | Message to display on error                   |
-| `--checkmark`               | Show checkmark on completion                  |
-| `--spinner TYPE`            | Use spinner animation instead of text ripple  |
-| `--spinner-pos POSITION`    | Position spinner before or after message      |
-| `--caps`                    | Enable case transformation mode               |
-| `--stdout`                  | Output captured command result to STDOUT      |
-| `--quiet`                   | Suppress all output                           |
-| `--list-spinners`           | List all available spinner types              |
+| Option                  | Description                                                   |
+| ----------------------- | ------------------------------------------------------------- |
+| `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)            |
+| `-l, --length LENGTH`   | Number of dots to display                                     |
+| `-m, --message MESSAGE` | Message to display before animation                           |
+| `--style STYLE`         | Animation style (blocks/geometric/circles or b/g/c)           |
+| `-c, --command COMMAND` | Command to run (optional - runs indefinitely without command) |
+| `--success TEXT`        | Text to display on successful completion                      |
+| `--error TEXT`          | Text to display on error                                      |
+| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)                |
+| `--stdout`              | Output captured command result to STDOUT                      |
 
 ### Ripple Library Usage
 
 You can also use Ripple as a Ruby library:
 
 ```ruby
-require_relative 'ripple'
+require 'ruby-progress'
 
 # Simple progress block
-result = Ripple.progress("Processing...") do
+result = RubyProgress::Ripple.progress("Processing...") do
   sleep 5  # Your actual work here
 end
 
 # With options
-rippler = Ripple.new("Loading Data", {
+rippler = RubyProgress::Ripple.new("Loading Data", {
   speed: :fast,
   format: :bidirectional,
   rainbow: true,
   spinner: :dots
 })
 
-Ripple.hide_cursor
+RubyProgress::Ripple.hide_cursor
 while some_condition
   rippler.advance
 end
-Ripple.show_cursor
+RubyProgress::Ripple.show_cursor
 ```
 
 ### Available Spinners
@@ -144,6 +212,9 @@ Worm is a clean, Unicode-based progress indicator that creates a ripple effect u
 #### Command Line
 
 ```bash
+# Run indefinitely without a command (like ripple)
+./worm.rb --message "Loading..." --speed fast --style circles
+
 # Run a command with progress animation
 ./worm.rb --command "sleep 5" --message "Installing" --success "Done!"
 
@@ -152,7 +223,38 @@ Worm is a clean, Unicode-based progress indicator that creates a ripple effect u
 
 # With custom error handling
 ./worm.rb --command "risky_operation" --error "Operation failed" --style geometric
+
+# With checkmarks for visual feedback
+./worm.rb --command "npm install" --success "Installation complete!" --checkmark
+
+# Capture and display command output
+./worm.rb --command "git status" --message "Checking status" --stdout
+
+# Combine checkmarks and stdout output
+./worm.rb --command "echo 'Build output'" --success "Build complete!" --checkmark --stdout
 ```
+
+#### Daemon mode (background indicator)
+
+Run the worm indicator as a background daemon and stop it later (useful in shell scripts):
+
+```bash
+# Start in the background (default PID file: /tmp/ruby-progress/progress.pid)
+prg worm --daemon &
+
+# ... run your tasks ...
+
+# Stop using the default PID file
+prg worm --stop
+
+# Use a custom PID file
+prg worm --daemon --pid-file /tmp/custom-worm.pid &
+
+# Stop using the matching custom PID file
+prg worm --stop --pid-file /tmp/custom-worm.pid
+```
+
+Stopping clears the progress line for clean output. You can also provide a success message and checkmark while stopping by sending SIGUSR1; the CLI handles cleanup automatically.
 
 #### Worm Command Line Options
 
@@ -169,10 +271,10 @@ Worm is a clean, Unicode-based progress indicator that creates a ripple effect u
 ### Worm Library Usage
 
 ```ruby
-require_relative 'worm'
+require 'ruby-progress'
 
 # Create and run animation with a block
-worm = Worm.new(
+worm = RubyProgress::Worm.new(
   length: 4,
   message: "Processing",
   speed: 'fast',
@@ -188,7 +290,7 @@ result = worm.animate(
 end
 
 # Or run with a command
-worm = Worm.new(command: "bundle install")
+worm = RubyProgress::Worm.new(command: "bundle install")
 worm.run_with_command
 ```
 
@@ -197,16 +299,19 @@ worm.run_with_command
 Worm supports three built-in animation styles:
 
 #### Circles
+
 - Baseline: `·` (middle dot)
 - Midline: `●` (black circle)
 - Peak: `⬤` (large circle)
 
 #### Blocks
+
 - Baseline: `▁` (lower eighth block)
 - Midline: `▄` (lower half block)
 - Peak: `█` (full block)
 
 #### Geometric
+
 - Baseline: `▪` (small black square)
 - Midline: `▫` (small white square)
 - Peak: `■` (large black square)
@@ -216,18 +321,90 @@ Worm supports three built-in animation styles:
 ## Requirements
 
 Both projects require:
+
 - Ruby 2.5 or higher
 - Terminal with Unicode support (for Worm)
 - ANSI color support (for Ripple rainbow effects)
 
 ## Installation
 
+### As a Gem (Recommended)
+
+```bash
+gem install ruby-progress
+```
+
+### From Source
+
 1. Clone this repository
-2. Make the scripts executable:
+2. Build and install:
+
    ```bash
-   chmod +x ripple worm.rb
+   bundle install
+   bundle exec rake build
+   gem install pkg/ruby-progress-*.gem
    ```
-3. Run directly or require as libraries in your Ruby projects
+
+### Development
+
+1. Clone the repository
+2. Install dependencies:
+
+   ```bash
+   bundle install
+   ```
+3. Run tests:
+
+   ```bash
+   bundle exec rspec
+   ```
+
+
+## Universal Utilities
+
+The gem provides universal utilities in the `RubyProgress::Utils` module for common terminal operations:
+
+### Terminal Control
+
+```ruby
+require 'ruby-progress'
+
+# Cursor control
+RubyProgress::Utils.hide_cursor    # Hide terminal cursor
+RubyProgress::Utils.show_cursor    # Show terminal cursor
+RubyProgress::Utils.clear_line     # Clear current line
+```
+
+### Completion Messages
+
+```ruby
+# Basic completion message
+RubyProgress::Utils.display_completion("Task completed!")
+
+# With success/failure indication and checkmarks
+RubyProgress::Utils.display_completion(
+  "Build successful!",
+  success: true,
+  show_checkmark: true
+)
+
+RubyProgress::Utils.display_completion(
+  "Build failed!",
+  success: false,
+  show_checkmark: true,
+  output_stream: :stdout  # :stdout, :stderr, or :warn (default)
+)
+
+# Clear line and display completion (useful for replacing progress indicators)
+RubyProgress::Utils.complete_with_clear(
+  "Processing complete!",
+  success: true,
+  show_checkmark: true,
+  output_stream: :stdout
+)
+```
+
+These utilities are used internally by both Ripple and Worm classes and are available for use in your own applications.
 
 ## Contributing
 

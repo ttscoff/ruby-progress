@@ -1,0 +1,30 @@
+# Coverage reports
+coverage/
+.rspec_status
+
+# Gem build files
+*.gem
+pkg/
+
+# Bundler
+.bundle/
+vendor/bundle/
+
+# Documentation
+doc/
+.yardoc/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+*.tmp
+*.log
