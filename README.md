@@ -28,11 +28,13 @@ prg ripple "Building..." --command "make build" --success "Build complete!" --st
 ```
 
 ### Global Options
+
 - `prg --help` - Show main help
 - `prg --version` - Show version info
 - `prg <subcommand> --help` - Show specific subcommand help
 
 ### Common Options (available for both subcommands)
+
 - `--speed SPEED` - Animation speed (fast/medium/slow or f/m/s)
 - `--message MESSAGE` - Message to display
 - `--command COMMAND` - Command to execute during animation
@@ -353,12 +355,12 @@ gem install ruby-progress
    ```bash
    bundle install
    ```
+
 3. Run tests:
 
    ```bash
    bundle exec rspec
    ```
-
 
 ## Universal Utilities
 
