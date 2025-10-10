@@ -891,7 +891,7 @@ module TwirlCLI
       end
 
       opts.on('--style STYLE', 'Spinner style (see --show-styles for options)') do |style|
-        options[:style] = style.to_sym
+        options[:style] = style
       end
 
       opts.separator ''
@@ -1000,7 +1000,7 @@ end
 class TwirlSpinner
   def initialize(message, options = {})
     @message = message
-    @style = options[:style] || :dots
+    @style = parse_style(options[:style] || 'dots')
     @speed = parse_speed(options[:speed] || 'medium')
     @frames = RubyProgress::INDICATORS[@style] || RubyProgress::INDICATORS[:dots]
     @index = 0
@@ -1018,6 +1018,64 @@ class TwirlSpinner
   end
 
   private
+
+  def parse_style(style_input)
+    return :dots unless style_input && !style_input.to_s.strip.empty?
+
+    style_lower = style_input.to_s.downcase.strip
+
+    # First, try exact match (convert string keys to symbols for comparison)
+    indicator_keys = RubyProgress::INDICATORS.keys.map(&:to_s)
+    return style_lower.to_sym if indicator_keys.include?(style_lower)
+
+    # Then try prefix matching - keys that start with the input
+    prefix_matches = indicator_keys.select do |key|
+      key.downcase.start_with?(style_lower)
+    end
+
+    unless prefix_matches.empty?
+      # For prefix matches, return the shortest one
+      best_match = prefix_matches.min_by(&:length)
+      return best_match.to_sym
+    end
+
+    # Try character-by-character fuzzy matching for partial inputs
+    # Find keys where the input characters appear in order (not necessarily contiguous)
+    fuzzy_matches = indicator_keys.select do |key|
+      key_chars = key.downcase.chars
+      input_chars = style_lower.chars
+
+      # Check if all input characters appear in order in the key
+      input_chars.all? do |char|
+        idx = key_chars.index(char)
+        if idx
+          key_chars = key_chars[idx + 1..-1] # Remove matched chars and continue
+          true
+        else
+          false
+        end
+      end
+    end
+
+    unless fuzzy_matches.empty?
+      # Sort by length (prefer shorter keys)
+      best_match = fuzzy_matches.min_by(&:length)
+      return best_match.to_sym
+    end
+
+    # Fallback to substring matching
+    substring_matches = indicator_keys.select do |key|
+      key.downcase.include?(style_lower)
+    end
+
+    unless substring_matches.empty?
+      best_match = substring_matches.min_by(&:length)
+      return best_match.to_sym
+    end
+
+    # Default fallback
+    :dots
+  end
 
   def parse_speed(speed)
     case speed.to_s.downcase
