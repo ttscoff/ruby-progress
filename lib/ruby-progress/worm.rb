@@ -223,7 +223,7 @@ module RubyProgress
       @position ||= 0
       @direction ||= 1
 
-      message_part = @message && !@message.empty? ? @message : ''
+      message_part = @message && !@message.empty? ? "#{@message} " : ''
       $stderr.print "\r\e[2K#{message_part}#{generate_dots(@position, @direction)}"
       $stderr.flush
 
@@ -280,18 +280,60 @@ module RubyProgress
     end
 
     def parse_style(style_input)
-      return RIPPLE_STYLES['circles'] unless style_input
+      return RIPPLE_STYLES['circles'] unless style_input && !style_input.to_s.strip.empty?
 
-      style_lower = style_input.to_s.downcase
-      if style_lower.start_with?('b')
-        RIPPLE_STYLES['blocks']
-      elsif style_lower.start_with?('g')
-        RIPPLE_STYLES['geometric']
-      elsif style_lower.start_with?('c')
-        RIPPLE_STYLES['circles']
-      else
-        RIPPLE_STYLES['circles'] # default
+      style_lower = style_input.to_s.downcase.strip
+
+      # First, try exact match
+      return RIPPLE_STYLES[style_lower] if RIPPLE_STYLES.key?(style_lower)
+
+      # Then try prefix matching - keys that start with the input
+      prefix_matches = RIPPLE_STYLES.keys.select do |key|
+        key.downcase.start_with?(style_lower)
       end
+
+      unless prefix_matches.empty?
+        # For prefix matches, return the shortest one
+        best_match = prefix_matches.min_by(&:length)
+        return RIPPLE_STYLES[best_match]
+      end
+
+      # Try character-by-character fuzzy matching for partial inputs
+      # Find keys where the input characters appear in order (not necessarily contiguous)
+      fuzzy_matches = RIPPLE_STYLES.keys.select do |key|
+        key_chars = key.downcase.chars
+        input_chars = style_lower.chars
+
+        # Check if all input characters appear in order in the key
+        input_chars.all? do |char|
+          idx = key_chars.index(char)
+          if idx
+            key_chars = key_chars[idx + 1..-1] # Remove matched chars and continue
+            true
+          else
+            false
+          end
+        end
+      end
+
+      unless fuzzy_matches.empty?
+        # Sort by length (prefer shorter keys)
+        best_match = fuzzy_matches.min_by(&:length)
+        return RIPPLE_STYLES[best_match]
+      end
+
+      # Fallback to substring matching
+      substring_matches = RIPPLE_STYLES.keys.select do |key|
+        key.downcase.include?(style_lower)
+      end
+
+      unless substring_matches.empty?
+        best_match = substring_matches.min_by(&:length)
+        return RIPPLE_STYLES[best_match]
+      end
+
+      # Default fallback
+      RIPPLE_STYLES['circles']
     end
 
     def animation_loop
@@ -299,7 +341,7 @@ module RubyProgress
       direction = 1
 
       while @running
-        message_part = @message && !@message.empty? ? @message : ''
+        message_part = @message && !@message.empty? ? "#{@message} " : ''
         # Enhanced line clearing for better daemon mode behavior
         $stderr.print "\r\e[2K#{message_part}#{generate_dots(position, direction)}"
         $stderr.flush
@@ -322,7 +364,7 @@ module RubyProgress
       frame_count = 0
 
       while @running && !stop_requested_proc.call
-        message_part = @message && !@message.empty? ? @message : ''
+        message_part = @message && !@message.empty? ? "#{@message} " : ''
 
         # Always clear current line
         $stderr.print "\r\e[2K"

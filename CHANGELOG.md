@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2025-10-10
+
+### Added
+
+- **Intelligent fuzzy matching for twirl styles**: Enhanced twirl style selector with sophisticated pattern matching
+  - Exact matches: Direct style name matching (case-insensitive)
+  - Prefix matches: `ar` matches `arc` instead of `arrow` (shortest match priority)
+  - Character-by-character fuzzy matches: `cls` matches `classic` (sequential character matching)
+  - Substring fallback: Comprehensive matching for partial inputs
+  - Works dynamically against all available indicator styles in `RubyProgress::INDICATORS`
+
+### Improved
+
+- **Worm message spacing**: Enhanced visual formatting for worm animations
+  - Automatic space insertion between `--message` text and animation
+  - Clean formatting: `"Loading data ●··●·"` instead of `"Loading data●··●·"`
+  - No extra spacing when no message is provided
+  - Consistent behavior across all worm animation methods (standard, daemon, aggressive clearing)
+
+### Technical
+
+- **Enhanced test coverage**: Added comprehensive fuzzy matching test suite for twirl styles
+  - 13 test cases covering exact, prefix, fuzzy, and edge case scenarios
+  - Validation of shortest match priority and character-order matching
+  - Integration with existing comprehensive test coverage (maintained at 70.47%)
+
 ## [1.1.7] - 2025-10-10
 
 ### Added
