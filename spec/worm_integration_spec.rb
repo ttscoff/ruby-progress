@@ -57,12 +57,12 @@ RSpec.describe RubyProgress::Worm, 'integration tests' do
     end
 
     it 'prints animation frame when running' do
-      expect { worm.send(:animation_loop_step) }.to output(/Testing/).to_stdout
+      expect { worm.send(:animation_loop_step) }.to output(/Testing/).to_stderr
     end
 
     it 'does nothing when not running' do
       worm.instance_variable_set(:@running, false)
-      expect { worm.send(:animation_loop_step) }.not_to output.to_stdout
+      expect { worm.send(:animation_loop_step) }.not_to output.to_stderr
     end
 
     it 'handles nil message gracefully' do

@@ -16,8 +16,19 @@ RSpec.describe RubyProgress::Utils do
   end
 
   describe '.clear_line' do
-    it 'outputs ANSI clear line sequence' do
-      expect { RubyProgress::Utils.clear_line }.to output("\r\e[K").to_stdout
+    it 'outputs ANSI clear line sequence to stderr by default' do
+      expect { RubyProgress::Utils.clear_line }.to output("\r\e[K").to_stderr
+    end
+
+    it 'outputs ANSI clear line sequence to stdout when specified' do
+      expect { RubyProgress::Utils.clear_line(:stdout) }.to output("\r\e[K").to_stdout
+    end
+  end
+
+  describe '.clear_line_aggressive' do
+    it 'outputs aggressive line clearing sequence to stderr' do
+      expect { RubyProgress::Utils.clear_line_aggressive }
+        .to output("\r\e[2K\e[1A\e[2K\r").to_stderr
     end
   end
 
