@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.9] - 2025-10-10
+
+### Fixed
+
+- **Worm animation line clearing**: Resolved issue where completion messages appeared alongside animation characters
+  - Fixed stream mismatch where animations used stderr but completion messages used stdout
+  - Implemented atomic operation combining line clearing and message output on stderr
+  - Ensured clean line clearing for all scenarios (success, error, no completion message)
+  - Updated tests to match new stderr-based completion message output
+  - Clean output format: animation disappears completely before completion message appears
+
+### Technical
+
+- **Stream consistency**: All worm animation output (including completion messages) now uses stderr consistently
+- **Enhanced completion message display**: Single atomic stderr operation prevents race conditions between line clearing and message display
+
 ## [1.1.8] - 2025-10-10
 
 ### Added
