@@ -31,13 +31,13 @@ module PrgCLI
       show_styles
       exit
     when '--stop-all'
-      stop_all_processes
-      exit
+      success = stop_all_processes
+      exit(success ? 0 : 1)
     when '-v', '--version'
       puts "prg version #{RubyProgress::VERSION}"
-      puts '  ripple - Text ripple animation with color effects'
-      puts '  worm   - Unicode wave animation with customizable styles'
-      puts '  twirl  - Spinner animation with various indicator styles'
+      puts "  ripple - Text ripple animation with color effects (v#{RubyProgress::RIPPLE_VERSION})"
+      puts "  worm   - Unicode wave animation with customizable styles (v#{RubyProgress::WORM_VERSION})"
+      puts "  twirl  - Spinner animation with various indicator styles (v#{RubyProgress::TWIRL_VERSION})"
       exit
     when '-h', '--help', 'help'
       show_help
@@ -195,40 +195,64 @@ module PrgCLI
 
   def self.stop_all_processes
     current_pid = Process.pid
-    puts 'Stopping all prg processes...'
 
     # Get list of prg processes excluding current process
     prg_pids = `pgrep -f "ruby.*bin/prg"`.split.map(&:to_i).reject { |pid| pid == current_pid }
 
-    if prg_pids.empty?
-      puts 'No prg processes found.'
-    else
-      prg_pids.each do |pid|
-        Process.kill('TERM', pid)
+    return false if prg_pids.empty?
+
+    # First try TERM signal
+    prg_pids.each do |pid|
+      Process.kill('TERM', pid)
+    rescue StandardError
+      # Ignore errors if process already terminated
+    end
+
+    # Give processes a moment to terminate gracefully
+    sleep 0.5
+
+    # Check which processes are still running and force kill them
+    still_running = `pgrep -f "ruby.*bin/prg"`.split.map(&:to_i).reject { |pid| pid == current_pid }
+    unless still_running.empty?
+      still_running.each do |pid|
+        Process.kill('KILL', pid)
       rescue StandardError
         # Ignore errors if process already terminated
       end
-      puts "Stopped #{prg_pids.length} prg process(es)."
     end
+
+    true
   end
 
   def self.stop_subcommand_processes(subcommand)
     current_pid = Process.pid
-    puts "Stopping all prg #{subcommand} processes..."
 
     # Get list of subcommand processes excluding current process
     subcommand_pids = `pgrep -f "ruby.*bin/prg #{subcommand}"`.split.map(&:to_i).reject { |pid| pid == current_pid }
 
-    if subcommand_pids.empty?
-      puts "No prg #{subcommand} processes found."
-    else
-      subcommand_pids.each do |pid|
-        Process.kill('TERM', pid)
+    return false if subcommand_pids.empty?
+
+    # First try TERM signal
+    subcommand_pids.each do |pid|
+      Process.kill('TERM', pid)
+    rescue StandardError
+      # Ignore errors if process already terminated
+    end
+
+    # Give processes a moment to terminate gracefully
+    sleep 0.5
+
+    # Check which processes are still running and force kill them
+    still_running = `pgrep -f "ruby.*bin/prg #{subcommand}"`.split.map(&:to_i).reject { |pid| pid == current_pid }
+    unless still_running.empty?
+      still_running.each do |pid|
+        Process.kill('KILL', pid)
       rescue StandardError
         # Ignore errors if process already terminated
       end
-      puts "Stopped #{subcommand_pids.length} prg #{subcommand} process(es)."
     end
+
+    true
   end
 end
 
@@ -350,8 +374,8 @@ module RippleCLI
         end
 
         opts.on('--stop-all', 'Stop all prg ripple processes') do
-          PrgCLI.stop_subcommand_processes('ripple')
-          exit
+          success = PrgCLI.stop_subcommand_processes('ripple')
+          exit(success ? 0 : 1)
         end
 
         opts.on('-v', '--version', 'Show version') do
@@ -654,6 +678,11 @@ module WormCLI
       end
       opts.on('--stop-checkmark', 'When stopping, include a success checkmark') { options[:stop_checkmark] = true }
 
+      opts.on('--stop-all', 'Stop all prg worm processes') do
+        success = PrgCLI.stop_subcommand_processes('worm')
+        exit(success ? 0 : 1)
+      end
+
       opts.on('--stop-pid FILE', 'Stop daemon by reading PID from file (deprecated: use --stop [--pid-file])') do |file|
         RubyProgress::Daemon.stop_daemon_by_pid_file(file)
         exit
@@ -673,8 +702,8 @@ module WormCLI
       end
 
       opts.on('--stop-all', 'Stop all prg worm processes') do
-        PrgCLI.stop_subcommand_processes('worm')
-        exit
+        success = PrgCLI.stop_subcommand_processes('worm')
+        exit(success ? 0 : 1)
       end
 
       opts.on('-v', '--version', 'Show version') do
@@ -942,8 +971,8 @@ module TwirlCLI
       end
 
       opts.on('--stop-all', 'Stop all prg twirl processes') do
-        PrgCLI.stop_subcommand_processes('twirl')
-        exit
+        success = PrgCLI.stop_subcommand_processes('twirl')
+        exit(success ? 0 : 1)
       end
 
       opts.on('-v', '--version', 'Show version') do
@@ -979,11 +1008,11 @@ class TwirlSpinner
 
   def animate
     if @message && !@message.empty?
-      print "\r\e[2K#{@message} #{@frames[@index]}"
+      $stderr.print "\r\e[2K#{@message} #{@frames[@index]}"
     else
-      print "\r\e[2K#{@frames[@index]}"
+      $stderr.print "\r\e[2K#{@frames[@index]}"
     end
-    $stdout.flush
+    $stderr.flush
     @index = (@index + 1) % @frames.length
     sleep @speed
   end

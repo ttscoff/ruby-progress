@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Visual style previews**: Added `--show-styles` flag to all subcommands showing visual previews of animation styles
-  - Global `prg --show-styles` displays all styles for all subcommands with visual examples  
+  - Global `prg --show-styles` displays all styles for all subcommands with visual examples
   - Subcommand-specific `prg <subcommand> --show-styles` shows only relevant styles
   - Ripple styles show "Progress" text with actual color/effect rendering
   - Worm styles display wave patterns like `··●⬤●··` for circles style
@@ -28,6 +28,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Each error includes appropriate usage information and help guidance
   - Consistent error format across all subcommands (ripple, worm, twirl)
 - **Style discovery**: Enhanced distinction between `--list-styles` (simple name lists) and `--show-styles` (visual previews)
+- **Silent process management**: All `--stop` and `--stop-all` commands now operate silently
+  - No status messages or confirmation output for cleaner automation
+  - Exit code 0 when processes found and stopped successfully
+  - Exit code 1 when no processes found to stop
+- **Terminal output separation**: Moved all animations to stderr for proper stream handling
+  - Animations and progress indicators use stderr (status information)
+  - Application output remains on stdout (program data)
+  - Fixes daemon mode output interruption issues
+- **Enhanced process cleanup**: Improved daemon process termination reliability
+  - Uses TERM signal first for graceful shutdown, followed by KILL if needed
+  - Comprehensive process detection and cleanup across all subcommands
+  - Better handling of orphaned processes
+- **Version display**: Enhanced `--version` output to show individual subcommand versions
+  - Main version: `prg version 1.1.7`
+  - Component versions: `ripple (v1.0.5)`, `worm (v1.0.2)`, `twirl (v1.0.0)`
+  - Enables tracking of individual component changes
+
+### Technical
+
+- **Test coverage**: Significantly improved test coverage from ~60% to 74.53%
+  - Added comprehensive error handling tests
+  - Enhanced daemon lifecycle testing
+  - Improved edge case coverage for all animation types
+  - Added version constant validation tests
 
 ## [1.1.4] - 2025-10-09
 

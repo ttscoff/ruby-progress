@@ -178,7 +178,7 @@ module RubyProgress
       RubyProgress::Utils.hide_cursor
 
       begin
-        animation_loop_step while @running && !stop_requested
+        animation_loop_daemon_mode(stop_requested_proc: -> { stop_requested })
       ensure
         RubyProgress::Utils.clear_line
         RubyProgress::Utils.show_cursor
@@ -224,8 +224,8 @@ module RubyProgress
       @direction ||= 1
 
       message_part = @message && !@message.empty? ? @message : ''
-      print "\r\e[2K#{message_part}#{generate_dots(@position, @direction)}"
-      $stdout.flush
+      $stderr.print "\r\e[2K#{message_part}#{generate_dots(@position, @direction)}"
+      $stderr.flush
 
       sleep @speed
 
@@ -300,10 +300,44 @@ module RubyProgress
 
       while @running
         message_part = @message && !@message.empty? ? @message : ''
-        print "\r\e[2K#{message_part}#{generate_dots(position, direction)}"
-        $stdout.flush
+        # Enhanced line clearing for better daemon mode behavior
+        $stderr.print "\r\e[2K#{message_part}#{generate_dots(position, direction)}"
+        $stderr.flush
 
         sleep @speed
+
+        position += direction
+        if position >= @length - 1
+          direction = -1
+        elsif position <= 0
+          direction = 1
+        end
+      end
+    end
+
+    # Enhanced animation loop for daemon mode with aggressive line clearing
+    def animation_loop_daemon_mode(stop_requested_proc: -> { false })
+      position = 0
+      direction = 1
+      frame_count = 0
+
+      while @running && !stop_requested_proc.call
+        message_part = @message && !@message.empty? ? @message : ''
+
+        # Always clear current line
+        $stderr.print "\r\e[2K"
+
+        # Every few frames, use aggressive clearing to handle interruptions
+        if (frame_count % 10).zero?
+          $stderr.print "\e[1A\e[2K"   # Move up and clear that line too (in case of interruption)
+          $stderr.print "\r"           # Return to start
+        end
+
+        $stderr.print "#{message_part}#{generate_dots(position, direction)}"
+        $stderr.flush
+
+        sleep @speed
+        frame_count += 1
 
         position += direction
         if position >= @length - 1
