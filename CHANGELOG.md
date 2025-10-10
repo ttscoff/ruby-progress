@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2025-10-10
+
+### Added
+
+- **Visual style previews**: Added `--show-styles` flag to all subcommands showing visual previews of animation styles
+  - Global `prg --show-styles` displays all styles for all subcommands with visual examples  
+  - Subcommand-specific `prg <subcommand> --show-styles` shows only relevant styles
+  - Ripple styles show "Progress" text with actual color/effect rendering
+  - Worm styles display wave patterns like `··●⬤●··` for circles style
+  - Twirl styles show spinner character sequences like `◜ ◠ ◝ ◞ ◡ ◟` for arc style
+- **Process management**: Added `--stop-all` flag for comprehensive process control
+  - Global `prg --stop-all` stops all prg processes across all subcommands
+  - Subcommand-specific `prg <subcommand> --stop-all` stops only processes for that animation type
+  - Smart process detection excludes current process to prevent self-termination
+  - Graceful termination using TERM signal for proper cleanup
+
+### Improved
+
+- **Error handling**: Replaced verbose Ruby stack traces with clean, user-friendly error messages
+  - Invalid command-line options now show simple "Invalid option: --flag-name" messages
+  - Each error includes appropriate usage information and help guidance
+  - Consistent error format across all subcommands (ripple, worm, twirl)
+- **Style discovery**: Enhanced distinction between `--list-styles` (simple name lists) and `--show-styles` (visual previews)
+
 ## [1.1.4] - 2025-10-09
 
 ### Fixed

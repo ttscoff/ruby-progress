@@ -8,17 +8,17 @@ RSpec.describe RubyProgress::Ripple, 'integration tests' do
   describe '#printout' do
     it 'prints animation frames to stderr with ANSI codes' do
       rainbow_ripple = described_class.new('Test', rainbow: true)
-      expect { rainbow_ripple.send(:printout) }.to output(/\e\[2K.*T.*e.*st.*\r/).to_stderr
+      expect { rainbow_ripple.send(:printout) }.to output(/\r\e\[2K.*T.*e.*st/).to_stderr
     end
 
     it 'prints without rainbow when disabled' do
       plain_ripple = described_class.new('Test', rainbow: false)
-      expect { plain_ripple.send(:printout) }.to output(/\e\[2K.*T.*e.*st.*\r/).to_stderr
+      expect { plain_ripple.send(:printout) }.to output(/\r\e\[2K.*T.*e.*st/).to_stderr
     end
 
     it 'handles caps transformation' do
       caps_ripple = described_class.new('test', caps: true)
-      expect { caps_ripple.send(:printout) }.to output(/\e\[2K.*TE.*\r/).to_stderr
+      expect { caps_ripple.send(:printout) }.to output(/\r\e\[2K.*TE/).to_stderr
     end
 
     it 'handles inverse highlighting' do
