@@ -81,7 +81,7 @@ RSpec.describe RubyProgress::Worm do
     context 'without checkmark' do
       it 'displays plain message' do
         expect { worm.send(:display_completion_message, 'Done!', true) }
-          .to output("Done!\n").to_stdout
+          .to output("\r\e[2KDone!\n").to_stderr
       end
     end
 
@@ -90,12 +90,12 @@ RSpec.describe RubyProgress::Worm do
 
       it 'displays success message with checkmark' do
         expect { checkmark_worm.send(:display_completion_message, 'Success!', true) }
-          .to output("✅ Success!\n").to_stdout
+          .to output("\r\e[2K✅ Success!\n").to_stderr
       end
 
       it 'displays failure message with checkmark' do
         expect { checkmark_worm.send(:display_completion_message, 'Failed!', false) }
-          .to output("🛑 Failed!\n").to_stdout
+          .to output("\r\e[2K🛑 Failed!\n").to_stderr
       end
     end
   end

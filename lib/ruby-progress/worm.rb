@@ -3,6 +3,7 @@
 require 'optparse'
 require 'open3'
 require 'json'
+require_relative 'utils'
 
 module RubyProgress
   # Animated progress indicator with ripple effect using Unicode combining characters
@@ -101,7 +102,8 @@ module RubyProgress
         display_completion_message(@error_text || "Error: #{e.message}", false)
         nil # Return nil instead of re-raising when used as a progress indicator
       ensure
-        # Always restore cursor and signal handler
+        # Always clear animation line and restore cursor
+        $stderr.print "\r\e[2K"
         RubyProgress::Utils.show_cursor
         Signal.trap('INT', original_int_handler) if original_int_handler
       end
@@ -242,13 +244,14 @@ module RubyProgress
 
     def display_completion_message(message, success)
       return unless message
-
+      
       mark = ''
       if @show_checkmark
         mark = success ? '✅ ' : '🛑 '
       end
 
-      puts "#{mark}#{message}"
+      # Clear animation line and output completion message on stderr
+      $stderr.print "\r\e[2K#{mark}#{message}\n"
     end
 
     def parse_speed(speed_input)
