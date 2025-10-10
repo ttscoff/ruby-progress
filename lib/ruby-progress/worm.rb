@@ -23,6 +23,26 @@ module RubyProgress
         baseline: '▪',  # small black square
         midline: '▫',   # small white square
         peak: '■'       # large black square
+      },
+      'cirlces_small' => {
+        baseline: '∙',
+        midline: '∙',
+        peak: '●'
+      },
+      'arrow' => {
+        baseline: '▹',
+        midline: '▸',
+        peak: '▶'
+      },
+      'balloon' => {
+        baseline: '.',
+        midline: 'o',
+        peak: '°'
+      },
+      'circle_open' => {
+        baseline: '○',
+        midline: '●',
+        peak: '○'
       }
     }.freeze
 
@@ -57,7 +77,6 @@ module RubyProgress
         @running = false
         RubyProgress::Utils.clear_line
         RubyProgress::Utils.show_cursor
-        puts "\nInterrupted!"
         exit 130
       end
 
@@ -118,7 +137,6 @@ module RubyProgress
         # animate method handles error display, just exit with proper code
         exit exit_code.nonzero? || 1
       rescue Interrupt
-        puts "\nInterrupted!"
         exit 130
       end
     end
@@ -129,7 +147,6 @@ module RubyProgress
         @running = false
         RubyProgress::Utils.clear_line
         RubyProgress::Utils.show_cursor
-        puts "\nInterrupted!"
         exit 130
       end
 
@@ -207,7 +224,7 @@ module RubyProgress
       @direction ||= 1
 
       message_part = @message && !@message.empty? ? @message : ''
-      print "\r#{message_part}#{generate_dots(@position, @direction)}"
+      print "\r\e[2K#{message_part}#{generate_dots(@position, @direction)}"
       $stdout.flush
 
       sleep @speed
@@ -283,7 +300,7 @@ module RubyProgress
 
       while @running
         message_part = @message && !@message.empty? ? @message : ''
-        print "\r#{message_part}#{generate_dots(position, direction)}"
+        print "\r\e[2K#{message_part}#{generate_dots(position, direction)}"
         $stdout.flush
 
         sleep @speed

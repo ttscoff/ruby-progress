@@ -25,7 +25,13 @@ module PrgCLI
     when 'twirl'
       TwirlCLI.run
     when '--list-styles'
+      list_styles
+      exit
+    when '--show-styles'
       show_styles
+      exit
+    when '--stop-all'
+      stop_all_processes
       exit
     when '-v', '--version'
       puts "prg version #{RubyProgress::VERSION}"
@@ -59,6 +65,8 @@ module PrgCLI
           -v, --version    Show version information
           -h, --help       Show this help message
           --list-styles    List all available styles for all subcommands
+          --show-styles    Show visual previews of all styles for all subcommands
+          --stop-all       Stop all prg processes
 
       EXAMPLES:
           prg ripple "Loading..." --style rainbow --speed fast
@@ -92,20 +100,134 @@ module PrgCLI
     # Do not chdir or close stdio: we want to be able to emit completion output
   end
 
+  def self.list_styles
+    puts '== ripple styles'
+    puts 'rainbow, inverse, caps, normal'
+    puts ''
+
+    puts '== worm styles'
+    worm_styles = RubyProgress::Worm::RIPPLE_STYLES
+    style_names = worm_styles.keys.reject { |name| name == 'cirlces_small' }
+    puts style_names.join(', ')
+    puts ''
+
+    puts '== twirl styles'
+    twirl_names = RubyProgress::INDICATORS.keys.map(&:to_s)
+    puts twirl_names.join(', ')
+  end
+
   def self.show_styles
-    puts '== ripple'
-    puts 'rainbow'
-    puts 'inverse'
-    puts 'caps'
+    show_ripple_styles
+    show_worm_styles
+    show_twirl_styles
+  end
+
+  def self.show_ripple_styles
+    puts '== ripple styles (visual effects for text)'
+
+    # Create sample text for ripple previews
+    sample_text = 'Progress'
+
+    # Rainbow preview - show with actual rainbow colors
+    rainbow_preview = sample_text.chars.map.with_index do |char, i|
+      colors = [31, 32, 33, 34, 35, 36] # red, green, yellow, blue, magenta, cyan
+      "\e[#{colors[i % colors.length]}m#{char}\e[0m"
+    end.join
+    puts "rainbow    - #{rainbow_preview}"
+
+    # Inverse preview - show with actual inverse background
+    inverse_preview = "\e[7m#{sample_text}\e[0m"
+    puts "inverse    - #{inverse_preview}"
+
+    # Caps preview
+    caps_preview = sample_text.upcase
+    puts "caps       - #{caps_preview}"
+
+    # Normal preview
+    puts "normal     - #{sample_text}"
+
+    # Show ripple effect preview with highlighted character in middle
     puts ''
-    puts '== worm'
-    puts 'circles'
-    puts 'blocks'
-    puts 'geometric'
+    puts 'Ripple effect preview (character 4 highlighted):'
+    ripple_demo = sample_text.chars.map.with_index do |char, i|
+      if i == 3 # highlight the 'g' in Progress
+        "\e[7m#{char}\e[0m" # inverse highlight
+      else
+        char
+      end
+    end.join
+    puts "normal     - #{ripple_demo}"
+
+    inverse_ripple_demo = sample_text.chars.map.with_index do |char, i|
+      if i == 3 # highlight the 'g' in Progress
+        "\e[0m#{char}\e[7m" # normal char in inverse text
+      else
+        "\e[7m#{char}\e[0m" # inverse char
+      end
+    end.join
+    puts "inverse    - \e[7m#{inverse_ripple_demo}\e[0m"
     puts ''
-    puts '== twirl'
-    RubyProgress::INDICATORS.each_key do |name|
-      puts name
+  end
+
+  def self.show_worm_styles
+    puts '== worm styles (wave animation patterns)'
+    # Load worm styles for preview
+    worm_styles = RubyProgress::Worm::RIPPLE_STYLES
+    worm_styles.each do |name, chars|
+      next if name == 'cirlces_small' # skip typo version
+
+      baseline = chars[:baseline]
+      midline = chars[:midline]
+      peak = chars[:peak]
+      preview = "#{baseline}#{baseline}#{midline}#{peak}#{midline}#{baseline}#{baseline}"
+      puts "#{name.ljust(10)} - #{preview}"
+    end
+    puts ''
+  end
+
+  def self.show_twirl_styles
+    puts '== twirl styles (spinner characters)'
+    RubyProgress::INDICATORS.each do |name, frames|
+      preview = frames.join(' ')
+      puts "#{name.to_s.ljust(12)} - #{preview}"
+    end
+  end
+
+  def self.stop_all_processes
+    current_pid = Process.pid
+    puts 'Stopping all prg processes...'
+
+    # Get list of prg processes excluding current process
+    prg_pids = `pgrep -f "ruby.*bin/prg"`.split.map(&:to_i).reject { |pid| pid == current_pid }
+
+    if prg_pids.empty?
+      puts 'No prg processes found.'
+    else
+      prg_pids.each do |pid|
+        Process.kill('TERM', pid)
+      rescue StandardError
+        # Ignore errors if process already terminated
+      end
+      puts "Stopped #{prg_pids.length} prg process(es)."
+    end
+  end
+
+  def self.stop_subcommand_processes(subcommand)
+    current_pid = Process.pid
+    puts "Stopping all prg #{subcommand} processes..."
+
+    # Get list of subcommand processes excluding current process
+    subcommand_pids = `pgrep -f "ruby.*bin/prg #{subcommand}"`.split.map(&:to_i).reject { |pid| pid == current_pid }
+
+    if subcommand_pids.empty?
+      puts "No prg #{subcommand} processes found."
+    else
+      subcommand_pids.each do |pid|
+        Process.kill('TERM', pid)
+      rescue StandardError
+        # Ignore errors if process already terminated
+      end
+      puts "Stopped #{subcommand_pids.length} prg #{subcommand} process(es)."
     end
   end
 end
@@ -131,106 +253,124 @@ module RippleCLI
       message: nil # For unified interface
     }
 
-    OptionParser.new do |opts|
-      opts.banner = 'Usage: prg ripple [options] [STRING]'
-      opts.separator ''
-      opts.separator 'Animation Options:'
+    begin
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: prg ripple [options] [STRING]'
+        opts.separator ''
+        opts.separator 'Animation Options:'
 
-      opts.on('-s', '--speed SPEED', 'Animation speed (fast/medium/slow or f/m/s)') do |s|
-        options[:speed] = case s.downcase
-                          when /^f/ then :fast
-                          when /^m/ then :medium
-                          when /^s/ then :slow
-                          else :medium
-                          end
-      end
+        opts.on('-s', '--speed SPEED', 'Animation speed (fast/medium/slow or f/m/s)') do |s|
+          options[:speed] = case s.downcase
+                            when /^f/ then :fast
+                            when /^m/ then :medium
+                            when /^s/ then :slow
+                            else :medium
+                            end
+        end
 
-      opts.on('-m', '--message MESSAGE', 'Message to display (alternative to positional argument)') do |msg|
-        options[:message] = msg
-      end
+        opts.on('-m', '--message MESSAGE', 'Message to display (alternative to positional argument)') do |msg|
+          options[:message] = msg
+        end
 
-      opts.on('--style STYLES', 'Animation styles (rainbow, inverse, caps - can be comma-separated)') do |styles|
-        options[:styles] = styles.split(',').map(&:strip).map(&:to_sym)
-      end
+        opts.on('--style STYLES', 'Animation styles (rainbow, inverse, caps - can be comma-separated)') do |styles|
+          options[:styles] = styles.split(',').map(&:strip).map(&:to_sym)
+        end
 
-      opts.on('-d', '--direction DIRECTION', 'Animation direction (forward/bidirectional or f/b)') do |f|
-        options[:format] = f =~ /^f/i ? :forward_only : :bidirectional
-      end
+        opts.on('-d', '--direction DIRECTION', 'Animation direction (forward/bidirectional or f/b)') do |f|
+          options[:format] = f =~ /^f/i ? :forward_only : :bidirectional
+        end
 
-      opts.separator ''
-      opts.separator 'Command Execution:'
+        opts.separator ''
+        opts.separator 'Command Execution:'
 
-      opts.on('-c', '--command COMMAND', 'Run command during animation (optional)') do |command|
-        options[:command] = command
-      end
+        opts.on('-c', '--command COMMAND', 'Run command during animation (optional)') do |command|
+          options[:command] = command
+        end
 
-      opts.on('--success MESSAGE', 'Success message to display') do |msg|
-        options[:success_message] = msg
-      end
+        opts.on('--success MESSAGE', 'Success message to display') do |msg|
+          options[:success_message] = msg
+        end
 
-      opts.on('--error MESSAGE', 'Error message to display') do |msg|
-        options[:fail_message] = msg
-      end
+        opts.on('--error MESSAGE', 'Error message to display') do |msg|
+          options[:fail_message] = msg
+        end
 
-      opts.on('--checkmark', 'Show checkmarks (✅ success, 🛑 failure)') do
-        options[:complete_checkmark] = true
-      end
+        opts.on('--checkmark', 'Show checkmarks (✅ success, 🛑 failure)') do
+          options[:complete_checkmark] = true
+        end
 
-      opts.on('--stdout', 'Output captured command result to STDOUT') do
-        options[:output] = :stdout
-      end
+        opts.on('--stdout', 'Output captured command result to STDOUT') do
+          options[:output] = :stdout
+        end
 
-      opts.on('--quiet', 'Suppress all output') do
-        options[:output] = :quiet
-      end
+        opts.on('--quiet', 'Suppress all output') do
+          options[:output] = :quiet
+        end
 
-      opts.separator ''
-      opts.separator 'Daemon Mode:'
+        opts.separator ''
+        opts.separator 'Daemon Mode:'
 
-      opts.on('--daemon', 'Run in background daemon mode') do
-        options[:daemon] = true
-      end
+        opts.on('--daemon', 'Run in background daemon mode') do
+          options[:daemon] = true
+        end
 
-      opts.on('--pid-file FILE', 'Write process ID to file (default: /tmp/ruby-progress/progress.pid)') do |file|
-        options[:pid_file] = file
-      end
+        opts.on('--pid-file FILE', 'Write process ID to file (default: /tmp/ruby-progress/progress.pid)') do |file|
+          options[:pid_file] = file
+        end
 
-      opts.on('--stop', 'Stop daemon (uses default PID file unless --pid-file specified)') do
-        options[:stop] = true
-      end
+        opts.on('--stop', 'Stop daemon (uses default PID file unless --pid-file specified)') do
+          options[:stop] = true
+        end
 
-      opts.on('--status', 'Show daemon status (running/not running)') do
-        options[:status] = true
-      end
+        opts.on('--status', 'Show daemon status (running/not running)') do
+          options[:status] = true
+        end
 
-      opts.on('--stop-success MESSAGE', 'When stopping, show this success message') do |msg|
-        options[:stop_success] = msg
-      end
-      opts.on('--stop-error MESSAGE', 'When stopping, show this error message') do |msg|
-        options[:stop_error] = msg
-      end
-      opts.on('--stop-checkmark', 'When stopping, include a success/error checkmark') do
-        options[:stop_checkmark] = true
-      end
+        opts.on('--stop-success MESSAGE', 'When stopping, show this success message') do |msg|
+          options[:stop_success] = msg
+        end
+        opts.on('--stop-error MESSAGE', 'When stopping, show this error message') do |msg|
+          options[:stop_error] = msg
+        end
+        opts.on('--stop-checkmark', 'When stopping, include a success/error checkmark') do
+          options[:stop_checkmark] = true
+        end
 
-      opts.separator ''
-      opts.separator 'Daemon notes:'
-      opts.separator '  - Do not append &; prg detaches itself and returns immediately.'
-      opts.separator '  - Use --status/--stop with optional --pid-file to control it.'
+        opts.separator ''
+        opts.separator 'Daemon notes:'
+        opts.separator '  - Do not append &; prg detaches itself and returns immediately.'
+        opts.separator '  - Use --status/--stop with optional --pid-file to control it.'
 
-      opts.separator ''
-      opts.separator 'General:'
+        opts.separator ''
+        opts.separator 'General:'
 
-      opts.on('-v', '--version', 'Show version') do
-        puts "Ripple version #{RubyProgress::VERSION}"
-        exit
-      end
+        opts.on('--show-styles', 'Show available ripple styles with visual previews') do
+          PrgCLI.show_ripple_styles
+          exit
+        end
 
-      opts.on('-h', '--help', 'Show this help') do
-        puts opts
-        exit
-      end
-    end.parse!
+        opts.on('--stop-all', 'Stop all prg ripple processes') do
+          PrgCLI.stop_subcommand_processes('ripple')
+          exit
+        end
+
+        opts.on('-v', '--version', 'Show version') do
+          puts "Ripple version #{RubyProgress::VERSION}"
+          exit
+        end
+
+        opts.on('-h', '--help', 'Show this help') do
+          puts opts
+          exit
+        end
+      end.parse!
+    rescue OptionParser::InvalidOption => e
+      puts "Invalid option: #{e.args.first}"
+      puts ''
+      puts 'Usage: prg ripple [options] [STRING]'
+      puts "Run 'prg ripple --help' for more information."
+      exit 1
+    end
 
     # Daemon/status/stop handling (process these without requiring text)
     if options[:status]
@@ -527,6 +667,16 @@ module WormCLI
       opts.separator ''
       opts.separator 'General:'
 
+      opts.on('--show-styles', 'Show available worm styles with visual previews') do
+        PrgCLI.show_worm_styles
+        exit
+      end
+
+      opts.on('--stop-all', 'Stop all prg worm processes') do
+        PrgCLI.stop_subcommand_processes('worm')
+        exit
+      end
+
       opts.on('-v', '--version', 'Show version') do
         puts "Worm version #{RubyProgress::VERSION}"
         exit
@@ -539,6 +689,12 @@ module WormCLI
     end.parse!
 
     options
+  rescue OptionParser::InvalidOption => e
+    puts "Invalid option: #{e.args.first}"
+    puts ''
+    puts 'Usage: prg worm [options]'
+    puts "Run 'prg worm --help' for more information."
+    exit 1
   end
 end
 
@@ -705,7 +861,7 @@ module TwirlCLI
         options[:message] = message
       end
 
-      opts.on('--style STYLE', 'Spinner style (see --list-styles for options)') do |style|
+      opts.on('--style STYLE', 'Spinner style (see --show-styles for options)') do |style|
         options[:style] = style.to_sym
       end
 
@@ -780,6 +936,16 @@ module TwirlCLI
       opts.separator ''
       opts.separator 'General:'
 
+      opts.on('--show-styles', 'Show available twirl styles with visual previews') do
+        PrgCLI.show_twirl_styles
+        exit
+      end
+
+      opts.on('--stop-all', 'Stop all prg twirl processes') do
+        PrgCLI.stop_subcommand_processes('twirl')
+        exit
+      end
+
       opts.on('-v', '--version', 'Show version') do
         puts "Twirl version #{RubyProgress::VERSION}"
         exit
@@ -792,6 +958,12 @@ module TwirlCLI
     end.parse!
 
     options
+  rescue OptionParser::InvalidOption => e
+    puts "Invalid option: #{e.args.first}"
+    puts ''
+    puts 'Usage: prg twirl [options]'
+    puts "Run 'prg twirl --help' for more information."
+    exit 1
   end
 end
 
@@ -807,10 +979,11 @@ class TwirlSpinner
 
   def animate
     if @message && !@message.empty?
-      print "\r#{@message} #{@frames[@index]}"
+      print "\r\e[2K#{@message} #{@frames[@index]}"
     else
-      print "\r#{@frames[@index]}"
+      print "\r\e[2K#{@frames[@index]}"
     end
+    $stdout.flush
     @index = (@index + 1) % @frames.length
     sleep @speed
   end

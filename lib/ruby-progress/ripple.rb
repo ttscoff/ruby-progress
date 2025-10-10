@@ -31,57 +31,27 @@ module RubyProgress
   INDICATORS = {
     arc: %w[◜ ◠ ◝ ◞ ◡ ◟],
     arrow: %w[← ↖ ↑ ↗ → ↘ ↓ ↙],
-    arrow_pulse: [
-      '▹▹▹▹▹',
-      '▸▹▹▹▹',
-      '▹▸▹▹▹',
-      '▹▹▸▹▹',
-      '▹▹▹▸▹',
-      '▹▹▹▹▸'
-    ],
-    balloon: %w[. o O ° O o .],
-    block_1: %w[▖▖▖ ▘▖▖ ▖▘▖ ▖▖▘],
     block_2: %w[▌ ▀ ▐ ▄],
-    bounce: [
-      '[    ]',
-      '[=   ]',
-      '[==  ]',
-      '[=== ]',
-      '[====]'
-    ],
-    circle: %w[○○○ ●○○ ○●○ ○○●],
+    block_1: %w[▖▖▖ ▘▖▖ ▖▘▖ ▖▖▘],
+    bounce: %w[⠁ ⠂ ⠄ ⡀ ⢀ ⠠ ⠐ ⠈],
     classic: ['|', '/', '—', '\\'],
     dots: %w[⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏],
     dots_2: %w[⣾ ⣽ ⣻ ⢿ ⡿ ⣟ ⣯ ⣷],
     dots_3: %w[⠋ ⠙ ⠚ ⠞ ⠖ ⠦ ⠴ ⠲ ⠳ ⠓],
-    dots_4: %w[⠄ ⠆ ⠇ ⠋ ⠙ ⠸ ⠰ ⠠ ⠰ ⠸ ⠙ ⠋ ⠇ ⠆],
-    dots_5: %w[⠋ ⠙ ⠚ ⠒ ⠂ ⠂ ⠒ ⠲ ⠴ ⠦ ⠖ ⠒ ⠐ ⠐ ⠒ ⠓ ⠋],
-    dots_6: %w[⠁ ⠉ ⠙ ⠚ ⠒ ⠂ ⠂ ⠒ ⠲ ⠴ ⠤ ⠄ ⠄ ⠤ ⠴ ⠲ ⠒ ⠂ ⠂ ⠒ ⠚ ⠙ ⠉ ⠁],
-    dots_7: %w[⠈ ⠉ ⠋ ⠓ ⠒ ⠐ ⠐ ⠒ ⠖ ⠦ ⠤ ⠠ ⠠ ⠤ ⠦ ⠖ ⠒ ⠐ ⠐ ⠒ ⠓ ⠋ ⠉ ⠈],
-    dots_8: %w[⠁ ⠁ ⠉ ⠙ ⠚ ⠒ ⠂ ⠂ ⠒ ⠲ ⠴ ⠤ ⠄ ⠄ ⠤ ⠠ ⠠ ⠤ ⠦ ⠖ ⠒ ⠐ ⠐ ⠒ ⠓ ⠋ ⠉ ⠈ ⠈],
-    dots_9: %w[⢹ ⢺ ⢼ ⣸ ⣇ ⡧ ⡗ ⡏],
-    dots_10: %w[⢄ ⢂ ⢁ ⡁ ⡈ ⡐ ⡠],
-    dots_11: %w[⠁ ⠂ ⠄ ⡀ ⢀ ⠠ ⠐ ⠈],
+    dots_4: %w[⢹ ⢺ ⢼ ⣸ ⣇ ⡧ ⡗ ⡏],
     ellipsis: ['.   ', '..  ', '... ', '....'],
-    lighthouse: ['∙∙∙', '●∙∙', '∙●∙', '∙∙●'],
-    o: %w[Ooo oOo ooO],
     pipe: %w[┤ ┘ ┴ └ ├ ┌ ┬ ┐],
     pulse: %w[⎺ ⎻ ⎼ ⎽ ⎼ ⎻],
     pulse_2: %w[▁ ▃ ▅ ▆ ▇ █ ▇ ▆ ▅ ▃],
     pulse_3: %w[▉ ▊ ▋ ▌ ▍ ▎ ▏ ▎ ▍ ▌ ▋ ▊ ▉],
     pulse_4: %w[- = ≡ = -],
-    push: [
-      '[>    ]',
-      '[=>   ]',
-      '[==>  ]',
-      '[===> ]',
-      '[====>]'
-    ],
+    o: %w[Ooo oOo ooO],
     spin: %w[◴ ◷ ◶ ◵],
     spin_2: %w[◐ ◓ ◑ ◒],
     spin_3: %w[◰ ◳ ◲ ◱],
     toggle: %w[■ □ ▪ ▫],
-    triangle: %w[◢ ◣ ◤ ◥]
+    triangle: %w[◢ ◣ ◤ ◥],
+    twinkle: %w[⢄ ⢂ ⢁ ⡁ ⡈ ⡐ ⡠]
   }.freeze
 
   # String extensions for color support
@@ -168,7 +138,8 @@ module RubyProgress
         char = @rainbow ? char.rainbow(i) : char.extend(StringExtensions).light_white
         post = letters.slice!(0, letters.length).join.extend(StringExtensions).dark_white
       end
-      $stderr.print "\e[2K#{pre}#{char}#{post}\r"
+      $stderr.print "\r\e[2K#{pre}#{char}#{post}"
+      $stderr.flush
     end
 
     # Hide or show the cursor (delegated to Utils)
