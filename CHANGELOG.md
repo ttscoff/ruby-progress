@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-10-11
+
+### Improved
+
+- **Demo script enhancements**: Updated quick demo with better visual examples
+  - Changed twirl emoji demonstration from `🎯🎪` to `♥️👍` for better display
+  - Updated worm custom style example from `.🟡*` to `.*🟡` for improved pattern visibility
+  - Updated version display in demo script to reflect current version
+
+### Technical
+
+- **Version alignment**: Synchronized demo script version display with actual gem version
+  - Ensures consistency between displayed and actual version numbers
+  - Maintains accurate version information for users
+
 ## [1.2.1] - 2025-10-11
 
 ### Fixed

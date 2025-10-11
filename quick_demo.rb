@@ -14,7 +14,7 @@ class QuickDemo
   end
 
   def run
-    puts "\n🚀 Ruby Progress Gem v1.2.0 - Quick Demo\n"
+    puts "\n🚀 Ruby Progress Gem v1.2.2 - Quick Demo\n"
     puts "=========================================\n\n"
 
     # Showcase the most impressive features
@@ -40,7 +40,7 @@ class QuickDemo
     run_cmd("worm --length 10 --ends '<<>>' --command 'sleep 3' --success 'Angled!' --checkmark")
 
     puts "\nTwirl with emojis:"
-    run_cmd("twirl --ends '🎯🎪' --command 'sleep 2' --success 'Decorated!'")
+    run_cmd("twirl --ends '♥️👍' --command 'sleep 2' --success 'Decorated!'")
 
     puts "\n"
   end
@@ -66,7 +66,7 @@ class QuickDemo
     run_cmd("worm --length 10 --direction forward --command 'sleep 4' --success 'Always forward!'")
 
     puts "\nCombined features:"
-    run_cmd("worm --length 10 --style custom=.🟡* --direction forward --ends '【】' --command 'sleep 4' --success 'Ultimate combo!'")
+    run_cmd("worm --length 10 --style custom=.*🟡 --direction forward --ends '【】' --command 'sleep 4' --success 'Ultimate combo!'")
 
     puts "\n"
   end
