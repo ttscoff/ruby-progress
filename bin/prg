@@ -68,11 +68,18 @@ module PrgCLI
           --show-styles    Show visual previews of all styles for all subcommands
           --stop-all       Stop all prg processes
 
+      COMMON OPTIONS (available for all subcommands):
+          --ends CHARS     Start/end characters (even number split in half)
+          --speed SPEED    Animation speed (fast/medium/slow)
+          --message TEXT   Message to display with animation
+          --checkmark      Show checkmarks for success/failure
+          --command CMD    Execute command during animation
+
       EXAMPLES:
-          prg ripple "Loading..." --style rainbow --speed fast
-          prg worm --message "Processing" --style blocks --checkmark
-          prg twirl --message "Spinning" --style dots --checkmark
-          prg ripple --command "sleep 3" --success "Done!" --checkmark
+          prg ripple "Loading..." --style rainbow --speed fast --ends "[]"
+          prg worm --message "Processing" --style blocks --checkmark --ends "()"
+          prg twirl --message "Spinning" --style dots --checkmark --ends "<<>>"
+          prg ripple --command "sleep 3" --success "Done!" --checkmark --ends "{}"
 
       Run 'prg <subcommand> --help' for specific subcommand options.
     HELP
@@ -302,6 +309,10 @@ module RippleCLI
 
         opts.on('-d', '--direction DIRECTION', 'Animation direction (forward/bidirectional or f/b)') do |f|
           options[:format] = f =~ /^f/i ? :forward_only : :bidirectional
+        end
+
+        opts.on('--ends CHARS', 'Start/end characters (even number of chars, split in half)') do |chars|
+          options[:ends] = chars
         end
 
         opts.separator ''
@@ -611,8 +622,16 @@ module WormCLI
         options[:length] = length
       end
 
-      opts.on('--style STYLE', 'Animation style (circles/blocks/geometric or c/b/g)') do |style|
+      opts.on('--style STYLE', 'Animation style (circles/blocks/geometric, c/b/g, or custom=abc)') do |style|
         options[:style] = style
+      end
+
+      opts.on('-d', '--direction DIRECTION', 'Animation direction (forward/bidirectional or f/b)') do |direction|
+        options[:direction] = direction =~ /^f/i ? :forward_only : :bidirectional
+      end
+
+      opts.on('--ends CHARS', 'Start/end characters (even number of chars, split in half)') do |chars|
+        options[:ends] = chars
       end
 
       opts.separator ''
@@ -894,6 +913,10 @@ module TwirlCLI
         options[:style] = style
       end
 
+      opts.on('--ends CHARS', 'Start/end characters (even number of chars, split in half)') do |chars|
+        options[:ends] = chars
+      end
+
       opts.separator ''
       opts.separator 'Command Execution:'
 
@@ -1003,14 +1026,15 @@ class TwirlSpinner
     @style = parse_style(options[:style] || 'dots')
     @speed = parse_speed(options[:speed] || 'medium')
     @frames = RubyProgress::INDICATORS[@style] || RubyProgress::INDICATORS[:dots]
+    @start_chars, @end_chars = RubyProgress::Utils.parse_ends(options[:ends])
     @index = 0
   end
 
   def animate
     if @message && !@message.empty?
-      $stderr.print "\r\e[2K#{@message} #{@frames[@index]}"
+      $stderr.print "\r\e[2K#{@start_chars}#{@message} #{@frames[@index]}#{@end_chars}"
     else
-      $stderr.print "\r\e[2K#{@frames[@index]}"
+      $stderr.print "\r\e[2K#{@start_chars}#{@frames[@index]}#{@end_chars}"
     end
     $stderr.flush
     @index = (@index + 1) % @frames.length

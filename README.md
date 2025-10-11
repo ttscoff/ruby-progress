@@ -29,6 +29,14 @@ prg twirl --message "Working..." --style dots --speed fast
 prg worm --command "sleep 5" --success "Completed!" --error "Failed!" --checkmark
 prg ripple "Building..." --command "make build" --success "Build complete!" --stdout
 prg twirl --command "npm install" --message "Installing packages" --style arc
+
+# With start/end character decoration using --ends
+prg ripple "Loading data" --ends "[]" --style rainbow
+prg worm --message "Processing" --ends "()" --style blocks
+prg twirl --message "Building" --ends "<<>>" --style dots
+
+# Complex --ends patterns with emojis
+prg worm --message "Magic" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 ```
 
 ### Global Options
@@ -38,7 +46,7 @@ prg twirl --command "npm install" --message "Installing packages" --style arc
 - `prg --list-styles` - Show all available styles for all subcommands
 - `prg <subcommand> --help` - Show specific subcommand help
 
-### Common Options (available for both subcommands)
+### Common Options (available for all subcommands)
 
 - `--speed SPEED` - Animation speed (fast/medium/slow or f/m/s)
 - `--message MESSAGE` - Message to display
@@ -47,6 +55,7 @@ prg twirl --command "npm install" --message "Installing packages" --style arc
 - `--error MESSAGE` - Error message on failure
 - `--checkmark` - Show checkmarks (✅ success, 🛑 failure)
 - `--stdout` - Output command results to STDOUT
+- `--ends CHARS` - Start/end characters (even number of chars, split in half)
 
 ### Daemon Mode (Background Progress)
 
@@ -304,25 +313,39 @@ Worm is a clean, Unicode-based progress indicator that creates a ripple effect u
 
 ```bash
 # Run indefinitely without a command (like ripple)
-./worm.rb --message "Loading..." --speed fast --style circles
+prg worm --message "Loading..." --speed fast --style circles
 
 # Run a command with progress animation
-./worm.rb --command "sleep 5" --message "Installing" --success "Done!"
+prg worm --command "sleep 5" --message "Installing" --success "Done!"
 
 # Customize the animation
-./worm.rb --command "make build" --speed fast --length 5 --style blocks
+prg worm --command "make build" --speed fast --length 5 --style blocks
 
 # With custom error handling
-./worm.rb --command "risky_operation" --error "Operation failed" --style geometric
+prg worm --command "risky_operation" --error "Operation failed" --style geometric
 
 # With checkmarks for visual feedback
-./worm.rb --command "npm install" --success "Installation complete!" --checkmark
+prg worm --command "npm install" --success "Installation complete!" --checkmark
+
+# Control animation direction (forward-only or bidirectional)
+prg worm --message "Processing" --direction forward --style circles
+prg worm --command "sleep 3" --direction bidirectional --style blocks
+
+# Create custom animations with 3-character patterns
+prg worm --message "Custom style" --style "custom=_-=" --command "sleep 2"
+prg worm --message "Emoji worm!" --style "custom=🟦🟨🟥" --success "Complete!"
+prg worm --message "Mixed chars" --style "custom=.🟡*" --direction forward
+
+# Add start/end characters around the animation
+prg worm --message "Bracketed" --ends "[]" --style circles
+prg worm --message "Parentheses" --ends "()" --style blocks --direction forward
+prg worm --message "Emoji ends" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 
 # Capture and display command output
-./worm.rb --command "git status" --message "Checking status" --stdout
+prg worm --command "git status" --message "Checking status" --stdout
 
 # Combine checkmarks and stdout output
-./worm.rb --command "echo 'Build output'" --success "Build complete!" --checkmark --stdout
+prg worm --command "echo 'Build output'" --success "Build complete!" --checkmark --stdout
 ```
 
 #### Daemon mode (background indicator)
@@ -351,15 +374,25 @@ Note: You don’t need `&` when starting the daemon. The command detaches itself
 
 #### Worm Command Line Options
 
-| Option                  | Description                                         |
-| ----------------------- | --------------------------------------------------- |
-| `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)  |
-| `-l, --length LENGTH`   | Number of dots to display                           |
-| `-m, --message MESSAGE` | Message to display before animation                 |
-| `--style STYLE`         | Animation style (blocks/geometric/circles or b/g/c) |
-| `-c, --command COMMAND` | Command to run (required)                           |
-| `--success TEXT`        | Text to display on successful completion            |
-| `--error TEXT`          | Text to display on error                            |
+| Option                  | Description                                              |
+| ----------------------- | -------------------------------------------------------- |
+| `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)       |
+| `-l, --length LENGTH`   | Number of dots to display                                |
+| `-m, --message MESSAGE` | Message to display before animation                      |
+| `--style STYLE`         | Animation style (circles/blocks/geometric or custom=XXX) |
+| `--direction DIR`       | Animation direction (forward/bidirectional or f/b)       |
+| `--ends CHARS`          | Start/end characters (even number of chars, split in half) |
+| `-c, --command COMMAND` | Command to run (optional)                                |
+| `--success TEXT`        | Text to display on successful completion                 |
+| `--error TEXT`          | Text to display on error                                 |
+| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)           |
+| `--stdout`              | Output captured command result to STDOUT                 |
+| `--daemon`              | Run in background daemon mode                            |
+| `--daemon-as NAME`      | Run in daemon mode with custom name                      |
+| `--stop`                | Stop a running daemon                                    |
+| `--stop-id NAME`        | Stop daemon by name (implies --stop)                     |
+| `--status`              | Check daemon status                                      |
+| `--status-id NAME`      | Check daemon status by name                              |
 
 ### Worm Library Usage
 
@@ -371,7 +404,8 @@ worm = RubyProgress::Worm.new(
   length: 4,
   message: "Processing",
   speed: 'fast',
-  style: 'circles'
+  style: 'circles',
+  direction: :bidirectional
 )
 
 result = worm.animate(
@@ -382,6 +416,15 @@ result = worm.animate(
   some_long_running_task
 end
 
+# With custom style and forward direction
+worm = RubyProgress::Worm.new(
+  message: "Custom animation",
+  style: 'custom=🔴🟡🟢',
+  direction: :forward
+)
+
+result = worm.animate { sleep 3 }
+
 # Or run with a command
 worm = RubyProgress::Worm.new(command: "bundle install")
 worm.run_with_command
@@ -389,7 +432,7 @@ worm.run_with_command
 
 ### Animation Styles
 
-Worm supports three built-in animation styles:
+Worm supports three built-in animation styles plus custom patterns:
 
 #### Circles
 
@@ -408,6 +451,39 @@ Worm supports three built-in animation styles:
 - Baseline: `▪` (small black square)
 - Midline: `▫` (small white square)
 - Peak: `■` (large black square)
+
+#### Custom Styles
+
+Create your own animation patterns using the `custom=XXX` format, where `XXX` is a 3-character pattern representing baseline, midline, and peak states:
+
+```bash
+# ASCII characters
+prg worm --style "custom=_-=" --message "Custom ASCII"
+
+# Unicode characters
+prg worm --style "custom=▫▪■" --message "Custom geometric"
+
+# Emojis (supports multi-byte characters)
+prg worm --style "custom=🟦🟨🟥" --message "Color progression"
+
+# Mixed ASCII and emoji
+prg worm --style "custom=.🟡*" --message "Mixed characters"
+```
+
+The custom format requires exactly 3 characters and supports:
+- ASCII characters
+- Unicode symbols and shapes
+- Emojis (properly handled as single characters)
+- Mixed combinations of the above
+
+#### Direction Control
+
+Control the animation movement pattern:
+
+- `--direction forward` (or `-d f`): Animation moves only forward
+- `--direction bidirectional` (or `-d b`): Animation moves back and forth (default)
+
+This works with all animation styles including custom patterns.
 
 ---
 

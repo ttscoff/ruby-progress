@@ -93,7 +93,8 @@ module RubyProgress
         spinner_position: false,
         caps: false,
         inverse: false,
-        output: :error
+        output: :error,
+        ends: nil
       }
       @options = defaults.merge(options)
       @string = string
@@ -104,6 +105,7 @@ module RubyProgress
       @spinner_position = @options[:spinner_position]
       @caps = @options[:caps]
       @inverse = @options[:inverse]
+      @start_chars, @end_chars = RubyProgress::Utils.parse_ends(@options[:ends])
     end
 
     def printout
@@ -138,7 +140,7 @@ module RubyProgress
         char = @rainbow ? char.rainbow(i) : char.extend(StringExtensions).light_white
         post = letters.slice!(0, letters.length).join.extend(StringExtensions).dark_white
       end
-      $stderr.print "\r\e[2K#{pre}#{char}#{post}"
+      $stderr.print "\r\e[2K#{@start_chars}#{pre}#{char}#{post}#{@end_chars}"
       $stderr.flush
     end
 

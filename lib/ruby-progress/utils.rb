@@ -61,5 +61,21 @@ module RubyProgress
       clear_line(output_stream) if output_stream != :warn # warn already includes clear in display_completion
       display_completion(message, success: success, show_checkmark: show_checkmark, output_stream: output_stream)
     end
+
+    # Parse start/end characters for animation wrapping
+    # @param ends_string [String] Even-length string to split in half for start/end chars
+    # @return [Array<String>] Array with [start_chars, end_chars]
+    def self.parse_ends(ends_string)
+      return ['', ''] unless ends_string && !ends_string.empty?
+
+      chars = ends_string.each_char.to_a
+      return ['', ''] if chars.length.odd? || chars.empty?
+
+      mid_point = chars.length / 2
+      start_chars = chars[0...mid_point].join
+      end_chars = chars[mid_point..-1].join
+
+      [start_chars, end_chars]
+    end
   end
 end

@@ -64,6 +64,8 @@ module RubyProgress
       @error_text = options[:error]
       @show_checkmark = options[:checkmark] || false
       @output_stdout = options[:stdout] || false
+      @direction_mode = options[:direction] || :bidirectional
+      @start_chars, @end_chars = RubyProgress::Utils.parse_ends(options[:ends])
       @running = false
     end
 
@@ -226,7 +228,7 @@ module RubyProgress
       @direction ||= 1
 
       message_part = @message && !@message.empty? ? "#{@message} " : ''
-      $stderr.print "\r\e[2K#{message_part}#{generate_dots(@position, @direction)}"
+      $stderr.print "\r\e[2K#{@start_chars}#{message_part}#{generate_dots(@position, @direction)}#{@end_chars}"
       $stderr.flush
 
       sleep @speed
@@ -234,7 +236,11 @@ module RubyProgress
       # Update position and direction
       @position += @direction
       if @position >= @length - 1
-        @direction = -1
+        if @direction_mode == :forward_only
+          @position = 0
+        else
+          @direction = -1
+        end
       elsif @position <= 0
         @direction = 1
       end
@@ -244,7 +250,7 @@ module RubyProgress
 
     def display_completion_message(message, success)
       return unless message
-      
+
       mark = ''
       if @show_checkmark
         mark = success ? '✅ ' : '🛑 '
@@ -285,7 +291,15 @@ module RubyProgress
     def parse_style(style_input)
       return RIPPLE_STYLES['circles'] unless style_input && !style_input.to_s.strip.empty?
 
-      style_lower = style_input.to_s.downcase.strip
+      style_str = style_input.to_s.strip
+
+      # Check for custom style format: custom=abc or custom_abc or customXabc
+      if style_str.match(/^custom[_=](.+)$/i)
+        custom_chars = Regexp.last_match(1)
+        return parse_custom_style(custom_chars)
+      end
+
+      style_lower = style_str.downcase
 
       # First, try exact match
       return RIPPLE_STYLES[style_lower] if RIPPLE_STYLES.key?(style_lower)
@@ -339,6 +353,24 @@ module RubyProgress
       RIPPLE_STYLES['circles']
     end
 
+    def parse_custom_style(custom_chars)
+      # Split into individual characters, properly handling multi-byte characters (emojis)
+      chars = custom_chars.each_char.to_a
+
+      # Ensure we have exactly 3 characters
+      if chars.length != 3
+        # Fallback to default if not exactly 3 characters
+        return RIPPLE_STYLES['circles']
+      end
+
+      # Create custom style hash with baseline, midline, peak
+      {
+        baseline: chars[0],
+        midline: chars[1],
+        peak: chars[2]
+      }
+    end
+
     def animation_loop
       position = 0
       direction = 1
@@ -346,14 +378,18 @@ module RubyProgress
       while @running
         message_part = @message && !@message.empty? ? "#{@message} " : ''
         # Enhanced line clearing for better daemon mode behavior
-        $stderr.print "\r\e[2K#{message_part}#{generate_dots(position, direction)}"
+        $stderr.print "\r\e[2K#{@start_chars}#{message_part}#{generate_dots(position, direction)}#{@end_chars}"
         $stderr.flush
 
         sleep @speed
 
         position += direction
         if position >= @length - 1
-          direction = -1
+          if @direction_mode == :forward_only
+            position = 0
+          else
+            direction = -1
+          end
         elsif position <= 0
           direction = 1
         end
@@ -386,7 +422,11 @@ module RubyProgress
 
         position += direction
         if position >= @length - 1
-          direction = -1
+          if @direction_mode == :forward_only
+            position = 0
+          else
+            direction = -1
+          end
         elsif position <= 0
           direction = 1
         end
