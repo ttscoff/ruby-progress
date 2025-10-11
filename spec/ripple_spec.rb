@@ -48,17 +48,17 @@ RSpec.describe RubyProgress::Ripple do
   describe '.complete' do
     it 'displays completion message without checkmark' do
       expect { described_class.complete('Test', 'Done', false, true) }
-        .to output("\e[2KDone\n").to_stderr
+        .to output("\r\e[2KDone\n").to_stderr
     end
 
     it 'displays completion message with success checkmark' do
       expect { described_class.complete('Test', 'Done', true, true) }
-        .to output("\e[2K✅ Done\n").to_stderr
+        .to output("\r\e[2K✅ Done\n").to_stderr
     end
 
     it 'displays completion message with failure checkmark' do
       expect { described_class.complete('Test', 'Failed', true, false) }
-        .to output("\e[2K🛑 Failed\n").to_stderr
+        .to output("\r\e[2K🛑 Failed\n").to_stderr
     end
   end
 

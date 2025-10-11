@@ -374,25 +374,25 @@ Note: You don’t need `&` when starting the daemon. The command detaches itself
 
 #### Worm Command Line Options
 
-| Option                  | Description                                              |
-| ----------------------- | -------------------------------------------------------- |
-| `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)       |
-| `-l, --length LENGTH`   | Number of dots to display                                |
-| `-m, --message MESSAGE` | Message to display before animation                      |
-| `--style STYLE`         | Animation style (circles/blocks/geometric or custom=XXX) |
-| `--direction DIR`       | Animation direction (forward/bidirectional or f/b)       |
+| Option                  | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| `-s, --speed SPEED`     | Animation speed (1-10, fast/medium/slow, or f/m/s)         |
+| `-l, --length LENGTH`   | Number of dots to display                                  |
+| `-m, --message MESSAGE` | Message to display before animation                        |
+| `--style STYLE`         | Animation style (circles/blocks/geometric or custom=XXX)   |
+| `--direction DIR`       | Animation direction (forward/bidirectional or f/b)         |
 | `--ends CHARS`          | Start/end characters (even number of chars, split in half) |
-| `-c, --command COMMAND` | Command to run (optional)                                |
-| `--success TEXT`        | Text to display on successful completion                 |
-| `--error TEXT`          | Text to display on error                                 |
-| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)           |
-| `--stdout`              | Output captured command result to STDOUT                 |
-| `--daemon`              | Run in background daemon mode                            |
-| `--daemon-as NAME`      | Run in daemon mode with custom name                      |
-| `--stop`                | Stop a running daemon                                    |
-| `--stop-id NAME`        | Stop daemon by name (implies --stop)                     |
-| `--status`              | Check daemon status                                      |
-| `--status-id NAME`      | Check daemon status by name                              |
+| `-c, --command COMMAND` | Command to run (optional)                                  |
+| `--success TEXT`        | Text to display on successful completion                   |
+| `--error TEXT`          | Text to display on error                                   |
+| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)             |
+| `--stdout`              | Output captured command result to STDOUT                   |
+| `--daemon`              | Run in background daemon mode                              |
+| `--daemon-as NAME`      | Run in daemon mode with custom name                        |
+| `--stop`                | Stop a running daemon                                      |
+| `--stop-id NAME`        | Stop daemon by name (implies --stop)                       |
+| `--status`              | Check daemon status                                        |
+| `--status-id NAME`      | Check daemon status by name                                |
 
 ### Worm Library Usage
 

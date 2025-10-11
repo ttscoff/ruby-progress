@@ -18,10 +18,10 @@ RSpec.describe 'Additional edge cases for coverage' do
         .to output("test\n").to_stderr
 
       expect { RubyProgress::Utils.display_completion('test', output_stream: :warn) }
-        .to output("\e[2Ktest\n").to_stderr
+        .to output("\r\e[2Ktest\n").to_stderr
 
       expect { RubyProgress::Utils.display_completion('test', output_stream: :other) }
-        .to output("\e[2Ktest\n").to_stderr # defaults to warn behavior
+        .to output("\r\e[2Ktest\n").to_stderr # defaults to warn behavior
     end
 
     it 'handles display_completion with checkmarks' do

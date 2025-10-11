@@ -49,9 +49,15 @@ module RubyProgress
       when :stderr
         warn formatted_message
       when :warn
-        warn "\e[2K#{formatted_message}"
+        # Ensure we're at the beginning of a fresh line, clear it, then display message
+        $stderr.print "\r\e[2K"
+        $stderr.flush
+        warn formatted_message
       else
-        warn "\e[2K#{formatted_message}"
+        # Ensure we're at the beginning of a fresh line, clear it, then display message
+        $stderr.print "\r\e[2K"
+        $stderr.flush
+        warn formatted_message
       end
     end
 

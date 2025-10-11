@@ -79,7 +79,7 @@ RSpec.describe 'Comprehensive Coverage Tests' do
       # This should NOT call clear_line since warn stream already includes clear
       expect(RubyProgress::Utils).not_to receive(:clear_line)
       expect { RubyProgress::Utils.complete_with_clear('Test', output_stream: :warn) }
-        .to output("\e[2KTest\n").to_stderr
+        .to output("\r\e[2KTest\n").to_stderr
     end
 
     it 'covers complete_with_clear with non-warn streams' do
@@ -115,12 +115,12 @@ RSpec.describe 'Comprehensive Coverage Tests' do
   describe 'Ripple class uncovered methods' do
     it 'covers self.complete class method' do
       expect { RubyProgress::Ripple.complete('Test', 'Done!', true, true) }
-        .to output("\e[2K✅ Done!\n").to_stderr
+        .to output("\r\e[2K✅ Done!\n").to_stderr
     end
 
     it 'covers self.complete with failure' do
       expect { RubyProgress::Ripple.complete('Test', 'Failed!', true, false) }
-        .to output("\e[2K🛑 Failed!\n").to_stderr
+        .to output("\r\e[2K🛑 Failed!\n").to_stderr
     end
 
     it 'covers advance method with different directions' do
