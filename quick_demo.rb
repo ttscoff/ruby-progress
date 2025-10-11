@@ -97,7 +97,7 @@ class QuickDemo
     colored_args = args.gsub(/^(ripple|worm|twirl)/, "#{bright_red}\\1#{reset}")
 
     # Colorize flags (--flag-name) in bright white and their values in bright green
-    colored_args = colored_args.gsub(/(--[\w-]+)(\s+|=)('[^']*'|"[^"]*"|\S+)/) do |match|
+    colored_args = colored_args.gsub(/(--[\w-]+)(\s+|=)('[^']*'|"[^"]*"|\S+)/) do |_match|
       flag = ::Regexp.last_match(1)
       separator = ::Regexp.last_match(2)
       value = ::Regexp.last_match(3)
@@ -105,7 +105,7 @@ class QuickDemo
     end
 
     # Colorize short flags (-f) in bright white and their values in bright green
-    colored_args = colored_args.gsub(/(-[a-zA-Z])(\s+)('[^']*'|"[^"]*"|\S+)/) do |match|
+    colored_args = colored_args.gsub(/(-[a-zA-Z])(\s+)('[^']*'|"[^"]*"|\S+)/) do |_match|
       flag = ::Regexp.last_match(1)
       separator = ::Regexp.last_match(2)
       value = ::Regexp.last_match(3)
@@ -124,7 +124,7 @@ class QuickDemo
 end
 
 # Quick execution
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   begin
     QuickDemo.new.run
   rescue Interrupt

@@ -106,7 +106,7 @@ class ReadmeDemo
 end
 
 # Command line interface
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   demo = ReadmeDemo.new
 
   if ARGV.empty?
@@ -122,8 +122,8 @@ if __FILE__ == $0
     when 'advanced'
       demo.advanced_examples
     else
-      puts "Usage: #{$0} [basic|styles|new|advanced]"
-      puts "       #{$0}     # run all demos"
+      puts "Usage: #{$PROGRAM_NAME} [basic|styles|new|advanced]"
+      puts "       #{$PROGRAM_NAME}     # run all demos"
     end
   end
 end

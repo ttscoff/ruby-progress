@@ -8,33 +8,33 @@ RSpec.describe 'Worm CLI new features' do
 
   describe '--direction flag' do
     it 'accepts forward direction' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "echo '' | timeout 1s ruby #{bin_path} worm --direction forward --message 'Forward test'"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts bidirectional direction' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "echo '' | timeout 1s ruby #{bin_path} worm --direction bidirectional --message 'Bidirectional test'"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts abbreviated directions' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "echo '' | timeout 1s ruby #{bin_path} worm --direction f --message 'Forward abbreviated'"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
 
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "echo '' | timeout 1s ruby #{bin_path} worm --direction b --message 'Bidirectional abbreviated'"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'combines direction with other options' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --direction forward --style blocks --command 'echo test'"
       )
       expect(status.exitstatus).to eq(0)
@@ -50,35 +50,35 @@ RSpec.describe 'Worm CLI new features' do
 
   describe '--style custom= flag' do
     it 'accepts custom ASCII styles' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --style 'custom=_-=' --command 'echo test'"
       )
       expect(status.exitstatus).to eq(0)
     end
 
     it 'accepts custom emoji styles' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --style 'custom=🟦🟨🟥' --command 'echo test'"
       )
       expect(status.exitstatus).to eq(0)
     end
 
     it 'accepts mixed character styles' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --style 'custom=.🟡*' --command 'echo test'"
       )
       expect(status.exitstatus).to eq(0)
     end
 
     it 'falls back gracefully for invalid custom patterns' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --style 'custom=ab' --command 'echo test'"
       )
       expect(status.exitstatus).to eq(0) # Should not crash, just use default
     end
 
     it 'combines custom style with direction' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --style 'custom=abc' --direction forward --command 'echo test'"
       )
       expect(status.exitstatus).to eq(0)
@@ -93,7 +93,7 @@ RSpec.describe 'Worm CLI new features' do
 
   describe 'combined new features' do
     it 'works with both direction and custom style' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --direction forward --style 'custom=🔴🟡🟢' " \
         "--message 'Custom forward animation' --command 'sleep 0.1'"
       )
@@ -111,14 +111,14 @@ RSpec.describe 'Worm CLI new features' do
 
   describe 'backward compatibility' do
     it 'still works with existing style names' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --style circles --command 'echo test'"
       )
       expect(status.exitstatus).to eq(0)
     end
 
     it 'defaults to bidirectional when no direction specified' do
-      stdout, stderr, status = Open3.capture3(
+      _, _, status = Open3.capture3(
         "ruby #{bin_path} worm --style blocks --command 'echo test'"
       )
       expect(status.exitstatus).to eq(0)

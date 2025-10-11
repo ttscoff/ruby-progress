@@ -92,7 +92,7 @@ RSpec.describe 'Fill CLI Integration' do
 
     describe '--report flag' do
       it 'shows detailed progress report' do
-        stdout, stderr, status = Open3.capture3("ruby #{bin_path} fill --report --percent 60 --length 10 --style bars")
+        stdout, _, status = Open3.capture3("ruby #{bin_path} fill --report --percent 60 --length 10 --style bars")
         expect(status.exitstatus).to eq(0)
         expect(stdout).to include('Progress Report:')
         expect(stdout).to include('Progress: 6/10')
@@ -168,7 +168,7 @@ RSpec.describe 'Fill CLI Integration' do
       it 'appears in version output' do
         stdout, _stderr, status = Open3.capture3("ruby #{bin_path} --version")
         expect(status.exitstatus).to eq(0)
-    expect(stdout).to include("fill   - Determinate progress bar with customizable styles (v#{RubyProgress::FILL_VERSION})")
+        expect(stdout).to include("fill   - Determinate progress bar with customizable styles (v#{RubyProgress::FILL_VERSION})")
       end
 
       it 'appears in style listings' do

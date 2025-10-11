@@ -105,7 +105,7 @@ RSpec.describe 'CLI --ends flag integration' do
 
   describe 'error handling' do
     it 'handles odd-length ends gracefully for ripple' do
-      stdout, stderr, status = Open3.capture3(
+      stdout, _, status = Open3.capture3(
         "ruby #{bin_path} ripple 'Test' --ends 'abc'"
       )
       expect(status.exitstatus).to eq(1)
@@ -113,7 +113,7 @@ RSpec.describe 'CLI --ends flag integration' do
     end
 
     it 'handles odd-length ends gracefully for worm' do
-      stdout, stderr, status = Open3.capture3(
+      stdout, _, status = Open3.capture3(
         "ruby #{bin_path} worm --message 'Test' --ends 'abc'"
       )
       expect(status.exitstatus).to eq(1)
@@ -121,7 +121,7 @@ RSpec.describe 'CLI --ends flag integration' do
     end
 
     it 'handles odd-length ends gracefully for twirl' do
-      stdout, stderr, status = Open3.capture3(
+      stdout, _, status = Open3.capture3(
         "ruby #{bin_path} twirl --message 'Test' --ends 'abc'"
       )
       expect(status.exitstatus).to eq(1)

@@ -15,16 +15,16 @@ module PrgCLI
       exit 1
     end
 
-      # Early scan: detect --ends flag and validate its argument before dispatching
-      if (i = ARGV.index('--ends')) && ARGV[i + 1]
-        ends_val = ARGV[i + 1]
-        unless RubyProgress::Utils.ends_valid?(ends_val)
-          puts 'Invalid --ends value: must contain an even number of characters'
-          exit 1
-        end
+    # Early scan: detect --ends flag and validate its argument before dispatching
+    if (i = ARGV.index('--ends')) && ARGV[i + 1]
+      ends_val = ARGV[i + 1]
+      unless RubyProgress::Utils.ends_valid?(ends_val)
+        puts 'Invalid --ends value: must contain an even number of characters'
+        exit 1
       end
+    end
 
-      subcommand = ARGV.shift.downcase
+    subcommand = ARGV.shift.downcase
 
     case subcommand
     when 'ripple'

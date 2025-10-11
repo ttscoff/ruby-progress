@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Experimental terminal line protection for daemon mode
 # This demonstrates potential solutions for the daemon output interruption problem
 

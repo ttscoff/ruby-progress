@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 # Test script to explore terminal cursor behavior with daemon output interruption
 
 require_relative 'lib/ruby-progress'
