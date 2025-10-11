@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Thin shim to delegate to the unified prg CLI
+prg = File.expand_path(File.join(__dir__, 'prg'))
+if File.executable?(prg)
+  exec prg, 'fill', *ARGV
+else
+  exec 'prg', 'fill', *ARGV
+end
