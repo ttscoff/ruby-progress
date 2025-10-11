@@ -20,7 +20,7 @@ RSpec.describe 'Fill CLI Integration' do
     it 'shows version' do
       stdout, _stderr, status = Open3.capture3("ruby #{bin_path} fill --version")
       expect(status.exitstatus).to eq(0)
-      expect(stdout).to include('Fill version 1.0.0')
+      expect(stdout).to include("Fill version #{RubyProgress::FILL_VERSION}")
     end
 
     it 'shows available fill styles' do
@@ -168,7 +168,7 @@ RSpec.describe 'Fill CLI Integration' do
       it 'appears in version output' do
         stdout, _stderr, status = Open3.capture3("ruby #{bin_path} --version")
         expect(status.exitstatus).to eq(0)
-        expect(stdout).to include('fill   - Determinate progress bar with customizable styles (v1.0.0)')
+    expect(stdout).to include("fill   - Determinate progress bar with customizable styles (v#{RubyProgress::FILL_VERSION})")
       end
 
       it 'appears in style listings' do

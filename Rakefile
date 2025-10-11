@@ -7,6 +7,13 @@ require 'rubocop/rake_task'
 RSpec::Core::RakeTask.new(:spec)
 RuboCop::RakeTask.new
 
+# Convenience aliases
+# `rake test` -> runs the :spec task (RSpec)
+task test: :spec
+
+# Provide a `rake lint` alias that runs RuboCop (which defines the :rubocop task)
+task lint: :rubocop
+
 task default: [:spec]
 
 # Used by markdown tasks
