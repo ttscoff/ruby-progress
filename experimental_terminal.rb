@@ -4,6 +4,8 @@
 # This demonstrates potential solutions for the daemon output interruption problem
 
 module RubyProgress
+  # SmartTerminal: experimental helpers for safer terminal cursor/line operations
+  # used by daemon-mode demos and scripts where output can interleave with animations.
   module SmartTerminal
     # Save current cursor position
     def self.save_cursor_position
@@ -18,6 +20,8 @@ module RubyProgress
     end
 
     # Get current cursor position (requires terminal interaction)
+    # rubocop:disable Naming/AccessorMethodName
+    # Intentionally named get_cursor_position because it performs an I/O request
     def self.get_cursor_position
       # This is complex and requires reading from stdin
       # which may not work reliably in daemon mode
@@ -26,6 +30,7 @@ module RubyProgress
       # Would need to read response: "\e[{row};{col}R"
       # But this requires terminal input capability
     end
+    # rubocop:enable Naming/AccessorMethodName
 
     # Alternative: Use absolute positioning
     def self.position_cursor_absolute(row, col)

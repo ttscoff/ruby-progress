@@ -1,12 +1,13 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Quick Demo Script for Ruby Progress Gem
-# =======================================
+# Short demo script for interactive/manual testing of ruby-progress features.
+# Focuses on a compact set of examples used during development and quick checks.
+##
 #
 # A shorter, more focused demo script for quick testing and demonstrations.
 # This version focuses on the most impressive features without long pauses.
-
+# QuickDemo: small, focused demo runner used for development and CI smoke tests.
 class QuickDemo
   def initialize
     @gem_path = File.expand_path('bin/prg', __dir__)

@@ -7,6 +7,11 @@ require 'optparse'
 require 'json'
 require 'English'
 
+# Load extracted per-subcommand CLI modules (they live under lib/ruby-progress/cli)
+require_relative '../lib/ruby-progress/cli/ripple_cli'
+require_relative '../lib/ruby-progress/cli/worm_cli'
+require_relative '../lib/ruby-progress/cli/twirl_cli'
+
 # Unified progress indicator CLI
 module PrgCLI
   def self.run

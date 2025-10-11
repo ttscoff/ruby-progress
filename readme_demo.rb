@@ -4,8 +4,8 @@
 # README Demo Script - Ruby Progress Gem
 # =====================================
 #
-# This script creates demos perfect for README documentation,
-# showing clean command-line usage and results.
+# ReadmeDemo: demos and examples intended for inclusion in the README
+# and other documentation. Keeps examples compact and easy to run.
 
 class ReadmeDemo
   def initialize

@@ -14,6 +14,8 @@
 
 require 'io/console'
 
+# Demo runner that exercises the major features of the ruby-progress gem
+# used by the documentation and screencast recordings.
 class ProgressDemo
   def initialize
     @gem_path = File.expand_path('bin/prg', __dir__)
@@ -187,7 +189,10 @@ class ProgressDemo
     # Combining features
     show_demo_header('Feature Combinations', 'Mixing multiple options together')
     show_command_info('Custom style + direction + ends: the full package!')
-    run_command("#{ruby_cmd} worm --length 10 --style custom=.🟡* --direction forward --ends '【】' --command 'sleep 5' --success 'Ultimate combo!' --checkmark")
+    # Split the long command string to avoid RuboCop line-length issues while preserving behavior
+    part1 = "#{ruby_cmd} worm --length 10 --style custom=.🟡* --direction forward "
+    part2 = "--ends '【】' --command 'sleep 5' --success 'Ultimate combo!' --checkmark"
+    run_command(part1 + part2)
     pause_between_demos
   end
 
