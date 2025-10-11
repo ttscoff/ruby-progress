@@ -25,17 +25,24 @@ prg ripple "Loading..." --style rainbow --speed fast
 # Use twirl spinner animation
 prg twirl --message "Working..." --style dots --speed fast
 
-# With command execution
+# Dedicated `fill` shim
+# If you prefer a dedicated binary for the determinate progress bar, a thin `fill` shim is available that delegates to `prg fill`:
+
+# Run fill directly (delegates to prg)
+fill --report --percent 50
+```
+
+### With command execution
 prg worm --command "sleep 5" --success "Completed!" --error "Failed!" --checkmark
 prg ripple "Building..." --command "make build" --success "Build complete!" --stdout
 prg twirl --command "npm install" --message "Installing packages" --style arc
 
-# With start/end character decoration using --ends
+### With start/end character decoration using --ends
 prg ripple "Loading data" --ends "[]" --style rainbow
 prg worm --message "Processing" --ends "()" --style blocks
 prg twirl --message "Building" --ends "<<>>" --style dots
 
-# Complex --ends patterns with emojis
+### Complex --ends patterns with emojis
 prg worm --message "Magic" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 ```
 
@@ -62,28 +69,28 @@ prg worm --message "Magic" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 For shell scripts where you need a continuous progress indicator across multiple steps, use daemon mode. You can use named daemons or custom PID files.
 
 ```bash
-# Start in background (uses default PID file)
+### Start in background (uses default PID file)
 prg worm --daemon --message "Working..."
 
-# Start with a custom name (creates /tmp/ruby-progress/NAME.pid)
+### Start with a custom name (creates /tmp/ruby-progress/NAME.pid)
 prg worm --daemon-as mytask --message "Processing data..."
 
-# ... run your tasks ...
+### ... run your tasks ...
 
-# Stop with a success message and checkmark (--stop-success implies --stop)
+### Stop with a success message and checkmark (--stop-success implies --stop)
 prg worm --stop-success "All done" --stop-checkmark
 
-# Stop a named daemon (--stop-id implies --stop)
+### Stop a named daemon (--stop-id implies --stop)
 prg worm --stop-id mytask --stop-success "Task complete!" --stop-checkmark
 
-# Or stop with an error message and checkmark
+### Or stop with an error message and checkmark
 prg worm --stop-error "Failed during step" --stop-checkmark
 
-# Check status at any time
+### Check status at any time
 prg worm --status
 prg worm --status-id mytask
 
-# Use a completely custom PID file path
+### Use a completely custom PID file path
 prg worm --daemon --pid-file /tmp/custom-progress.pid
 prg worm --status --pid-file /tmp/custom-progress.pid
 prg worm --stop-success "Complete" --pid-file /tmp/custom-progress.pid
@@ -95,14 +102,67 @@ Notes:
 - `--stop-success` and `--stop-error` are mutually exclusive; whichever you provide determines the success state and icon if `--stop-checkmark` is set.
 - The indicator clears its line on shutdown and prints the final message to STDOUT.
 - `--stop-pid` is still supported for backward compatibility, but `--stop [--pid-file FILE]` is preferred.
+o- [Ruby Progress Indicators](#ruby-progress-indicators)
+- [Unified Interface](#unified-interface)
+  - [With command execution](#with-command-execution)
+  - [With start/end character decoration using --ends](#with-startend-character-decoration-using-ends)
+  - [Complex --ends patterns with emojis](#complex-ends-patterns-with-emojis)
+  - [Start in background (uses default PID file)](#start-in-background-uses-default-pid-file)
+  - [Start with a custom name (creates /tmp/ruby-progress/NAME.pid)](#start-with-a-custom-name-creates-tmpruby-progressnamepid)
+  - [... run your tasks ...](#-run-your-tasks-)
+  - [Stop with a success message and checkmark (--stop-success implies --stop)](#stop-with-a-success-message-and-checkmark-stop-success-implies-stop)
+  - [Stop a named daemon (--stop-id implies --stop)](#stop-a-named-daemon-stop-id-implies-stop)
+  - [Or stop with an error message and checkmark](#or-stop-with-an-error-message-and-checkmark)
+  - [Check status at any time](#check-status-at-any-time)
+  - [Use a completely custom PID file path](#use-a-completely-custom-pid-file-path)
+  - [Basic text animation](#basic-text-animation)
+  - [With style options](#with-style-options)
+  - [Multiple styles combined](#multiple-styles-combined)
+  - [Case transformation mode](#case-transformation-mode)
+  - [Run a command with progress animation](#run-a-command-with-progress-animation)
+  - [Simple progress block](#simple-progress-block)
+  - [With options](#with-options)
+  - [Basic spinner animation](#basic-spinner-animation)
+  - [With command execution](#with-command-execution)
+  - [Different spinner styles](#different-spinner-styles)
+  - [With success/error handling](#with-successerror-handling)
+  - [Daemon mode for background tasks](#daemon-mode-for-background-tasks)
+  - [... do other work ...](#-do-other-work-)
+  - [Run indefinitely without a command (like ripple)](#run-indefinitely-without-a-command-like-ripple)
+  - [Run a command with progress animation](#run-a-command-with-progress-animation)
+  - [Customize the animation](#customize-the-animation)
+  - [With custom error handling](#with-custom-error-handling)
+  - [With checkmarks for visual feedback](#with-checkmarks-for-visual-feedback)
+  - [Control animation direction (forward-only or bidirectional)](#control-animation-direction-forward-only-or-bidirectional)
+  - [Create custom animations with 3-character patterns](#create-custom-animations-with-3-character-patterns)
+  - [Add start/end characters around the animation](#add-startend-characters-around-the-animation)
+  - [Capture and display command output](#capture-and-display-command-output)
+  - [Combine checkmarks and stdout output](#combine-checkmarks-and-stdout-output)
+  - [Start in the background (default PID file: /tmp/ruby-progress/progress.pid)](#start-in-the-background-default-pid-file-tmpruby-progressprogresspid)
+  - [... run your tasks ...](#-run-your-tasks-)
+  - [Stop using the default PID file](#stop-using-the-default-pid-file)
+  - [Use a custom PID file](#use-a-custom-pid-file)
+  - [Stop using the matching custom PID file](#stop-using-the-matching-custom-pid-file)
+  - [Create and run animation with a block](#create-and-run-animation-with-a-block)
+  - [Your work here](#your-work-here)
+  - [With custom style and forward direction](#with-custom-style-and-forward-direction)
+  - [Or run with a command](#or-run-with-a-command)
+  - [ASCII characters](#ascii-characters)
+  - [Unicode characters](#unicode-characters)
+  - [Emojis (supports multi-byte characters)](#emojis-supports-multi-byte-characters)
+  - [Mixed ASCII and emoji](#mixed-ascii-and-emoji)
+  - [Cursor control](#cursor-control)
+  - [Basic completion message](#basic-completion-message)
+  - [With success/failure indication and checkmarks](#with-successfailure-indication-and-checkmarks)
+  - [Clear line and display completion (useful for replacing progress indicators)](#clear-line-and-display-completion-useful-for-replacing-progress-indicators)
 
 ## Table of Contents
 
 - [Ruby Progress Indicators](#ruby-progress-indicators)
   - [Unified Interface](#unified-interface)
-    - [Global Options](#global-options)
-    - [Common Options (available for both subcommands)](#common-options-available-for-both-subcommands)
-    - [Daemon Mode (Background Progress)](#daemon-mode-background-progress)
+    - [With command execution](#with-command-execution)
+    - [With start/end character decoration using --ends](#with-startend-character-decoration-using---ends)
+    - [Complex --ends patterns with emojis](#complex---ends-patterns-with-emojis)
   - [Table of Contents](#table-of-contents)
   - [Ripple](#ripple)
     - [Ripple Features](#ripple-features)
@@ -127,6 +187,8 @@ Notes:
       - [Circles](#circles)
       - [Blocks](#blocks)
       - [Geometric](#geometric)
+      - [Custom Styles](#custom-styles)
+      - [Direction Control](#direction-control)
   - [Requirements](#requirements)
   - [Installation](#installation)
     - [As a Gem (Recommended)](#as-a-gem-recommended)
@@ -137,6 +199,7 @@ Notes:
     - [Completion Messages](#completion-messages)
   - [Contributing](#contributing)
   - [License](#license)
+
 
 ---
 
@@ -159,19 +222,19 @@ Ripple is a sophisticated text animation library that creates ripple effects acr
 #### Ripple CLI examples
 
 ```bash
-# Basic text animation
+### Basic text animation
 prg ripple "Loading..."
 
-# With style options
+### With style options
 prg ripple "Processing Data" --speed fast --style rainbow --direction bidirectional
 
-# Multiple styles combined
+### Multiple styles combined
 prg ripple "Loading..." --style rainbow,inverse
 
-# Case transformation mode
+### Case transformation mode
 prg ripple "Processing Text" --style caps,inverse
 
-# Run a command with progress animation
+### Run a command with progress animation
 prg ripple "Installing packages" --command "sleep 5" --success "Installation complete!" --checkmark
 ```
 
@@ -196,12 +259,12 @@ You can also use Ripple as a Ruby library:
 ```ruby
 require 'ruby-progress'
 
-# Simple progress block
+### Simple progress block
 result = RubyProgress::Ripple.progress("Processing...") do
   sleep 5  # Your actual work here
 end
 
-# With options
+### With options
 rippler = RubyProgress::Ripple.new("Loading Data", {
   speed: :fast,
   format: :bidirectional,
@@ -236,24 +299,24 @@ Twirl is a lightweight spinner animation system providing over 35 different spin
 #### Command Line
 
 ```bash
-# Basic spinner animation
+### Basic spinner animation
 prg twirl --message "Processing..." --style dots
 
-# With command execution
+### With command execution
 prg twirl --command "npm install" --message "Installing" --style arc
 
-# Different spinner styles
+### Different spinner styles
 prg twirl --message "Working" --style arrows --speed fast
 prg twirl --message "Loading" --style blocks --speed slow
 
-# With success/error handling
+### With success/error handling
 prg twirl --command "make build" --success "Build complete!" --error "Build failed!" --checkmark
 
-# Daemon mode for background tasks
+### Daemon mode for background tasks
 prg twirl --daemon --message "Background processing" --style geometric
 prg twirl --daemon-as mytask --message "Named task" --style dots
 
-# ... do other work ...
+### ... do other work ...
 prg twirl --stop-success "Processing complete!"
 prg twirl --stop-id mytask --stop-success "Task finished!"
 ```
@@ -312,39 +375,39 @@ Worm is a clean, Unicode-based progress indicator that creates a ripple effect u
 #### Command Line
 
 ```bash
-# Run indefinitely without a command (like ripple)
+### Run indefinitely without a command (like ripple)
 prg worm --message "Loading..." --speed fast --style circles
 
-# Run a command with progress animation
+### Run a command with progress animation
 prg worm --command "sleep 5" --message "Installing" --success "Done!"
 
-# Customize the animation
+### Customize the animation
 prg worm --command "make build" --speed fast --length 5 --style blocks
 
-# With custom error handling
+### With custom error handling
 prg worm --command "risky_operation" --error "Operation failed" --style geometric
 
-# With checkmarks for visual feedback
+### With checkmarks for visual feedback
 prg worm --command "npm install" --success "Installation complete!" --checkmark
 
-# Control animation direction (forward-only or bidirectional)
+### Control animation direction (forward-only or bidirectional)
 prg worm --message "Processing" --direction forward --style circles
 prg worm --command "sleep 3" --direction bidirectional --style blocks
 
-# Create custom animations with 3-character patterns
+### Create custom animations with 3-character patterns
 prg worm --message "Custom style" --style "custom=_-=" --command "sleep 2"
 prg worm --message "Emoji worm!" --style "custom=🟦🟨🟥" --success "Complete!"
 prg worm --message "Mixed chars" --style "custom=.🟡*" --direction forward
 
-# Add start/end characters around the animation
+### Add start/end characters around the animation
 prg worm --message "Bracketed" --ends "[]" --style circles
 prg worm --message "Parentheses" --ends "()" --style blocks --direction forward
 prg worm --message "Emoji ends" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 
-# Capture and display command output
+### Capture and display command output
 prg worm --command "git status" --message "Checking status" --stdout
 
-# Combine checkmarks and stdout output
+### Combine checkmarks and stdout output
 prg worm --command "echo 'Build output'" --success "Build complete!" --checkmark --stdout
 ```
 
@@ -353,18 +416,18 @@ prg worm --command "echo 'Build output'" --success "Build complete!" --checkmark
 Run the worm indicator as a background daemon and stop it later (useful in shell scripts):
 
 ```bash
-# Start in the background (default PID file: /tmp/ruby-progress/progress.pid)
+### Start in the background (default PID file: /tmp/ruby-progress/progress.pid)
 prg worm --daemon
 
-# ... run your tasks ...
+### ... run your tasks ...
 
-# Stop using the default PID file
+### Stop using the default PID file
 prg worm --stop
 
-# Use a custom PID file
+### Use a custom PID file
 prg worm --daemon --pid-file /tmp/custom-worm.pid
 
-# Stop using the matching custom PID file
+### Stop using the matching custom PID file
 prg worm --stop --pid-file /tmp/custom-worm.pid
 ```
 
@@ -399,7 +462,7 @@ Note: You don’t need `&` when starting the daemon. The command detaches itself
 ```ruby
 require 'ruby-progress'
 
-# Create and run animation with a block
+### Create and run animation with a block
 worm = RubyProgress::Worm.new(
   length: 4,
   message: "Processing",
@@ -416,7 +479,7 @@ result = worm.animate(
   some_long_running_task
 end
 
-# With custom style and forward direction
+### With custom style and forward direction
 worm = RubyProgress::Worm.new(
   message: "Custom animation",
   style: 'custom=🔴🟡🟢',
@@ -425,7 +488,7 @@ worm = RubyProgress::Worm.new(
 
 result = worm.animate { sleep 3 }
 
-# Or run with a command
+### Or run with a command
 worm = RubyProgress::Worm.new(command: "bundle install")
 worm.run_with_command
 ```
@@ -457,16 +520,16 @@ Worm supports three built-in animation styles plus custom patterns:
 Create your own animation patterns using the `custom=XXX` format, where `XXX` is a 3-character pattern representing baseline, midline, and peak states:
 
 ```bash
-# ASCII characters
+### ASCII characters
 prg worm --style "custom=_-=" --message "Custom ASCII"
 
-# Unicode characters
+### Unicode characters
 prg worm --style "custom=▫▪■" --message "Custom geometric"
 
-# Emojis (supports multi-byte characters)
+### Emojis (supports multi-byte characters)
 prg worm --style "custom=🟦🟨🟥" --message "Color progression"
 
-# Mixed ASCII and emoji
+### Mixed ASCII and emoji
 prg worm --style "custom=.🟡*" --message "Mixed characters"
 ```
 
@@ -538,7 +601,7 @@ The gem provides universal utilities in the `RubyProgress::Utils` module for com
 ```ruby
 require 'ruby-progress'
 
-# Cursor control
+### Cursor control
 RubyProgress::Utils.hide_cursor    # Hide terminal cursor
 RubyProgress::Utils.show_cursor    # Show terminal cursor
 RubyProgress::Utils.clear_line     # Clear current line
@@ -547,10 +610,10 @@ RubyProgress::Utils.clear_line     # Clear current line
 ### Completion Messages
 
 ```ruby
-# Basic completion message
+### Basic completion message
 RubyProgress::Utils.display_completion("Task completed!")
 
-# With success/failure indication and checkmarks
+### With success/failure indication and checkmarks
 RubyProgress::Utils.display_completion(
   "Build successful!",
   success: true,
@@ -564,7 +627,7 @@ RubyProgress::Utils.display_completion(
   output_stream: :stdout  # :stdout, :stderr, or :warn (default)
 )
 
-# Clear line and display completion (useful for replacing progress indicators)
+### Clear line and display completion (useful for replacing progress indicators)
 RubyProgress::Utils.complete_with_clear(
   "Processing complete!",
   success: true,
