@@ -5,4 +5,5 @@ module RubyProgress
   WORM_VERSION = '1.1.2'
   TWIRL_VERSION = '1.1.2'
   RIPPLE_VERSION = '1.1.2'
+  FILL_VERSION = '1.0.0'
 end

@@ -24,6 +24,8 @@ module PrgCLI
       WormCLI.run
     when 'twirl'
       TwirlCLI.run
+    when 'fill'
+      RubyProgress::FillCLI.run
     when '--list-styles'
       list_styles
       exit
@@ -38,6 +40,7 @@ module PrgCLI
       puts "  ripple - Text ripple animation with color effects (v#{RubyProgress::RIPPLE_VERSION})"
       puts "  worm   - Unicode wave animation with customizable styles (v#{RubyProgress::WORM_VERSION})"
       puts "  twirl  - Spinner animation with various indicator styles (v#{RubyProgress::TWIRL_VERSION})"
+      puts "  fill   - Determinate progress bar with customizable styles (v#{RubyProgress::FILL_VERSION})"
       exit
     when '-h', '--help', 'help'
       show_help
@@ -60,6 +63,7 @@ module PrgCLI
           ripple    Text ripple animation with color effects
           worm      Unicode wave animation with customizable dot styles
           twirl     Spinner-based animation with various indicator styles
+          fill      Determinate progress bar with customizable fill styles
 
       GLOBAL OPTIONS:
           -v, --version    Show version information
@@ -121,12 +125,20 @@ module PrgCLI
     puts '== twirl styles'
     twirl_names = RubyProgress::INDICATORS.keys.map(&:to_s)
     puts twirl_names.join(', ')
+    puts ''
+    puts '== fill =='
+    if defined?(RubyProgress::Fill::FILL_STYLES)
+      puts RubyProgress::Fill::FILL_STYLES.keys.map(&:to_s).join(', ')
+    else
+      puts 'blocks, classic, dots, ascii, bars, squares, circles, arrows, stars'
+    end
   end
 
   def self.show_styles
     show_ripple_styles
     show_worm_styles
     show_twirl_styles
+    show_fill_styles
   end
 
   def self.show_ripple_styles
@@ -197,6 +209,19 @@ module PrgCLI
     RubyProgress::INDICATORS.each do |name, frames|
       preview = frames.join(' ')
       puts "#{name.to_s.ljust(12)} - #{preview}"
+    end
+  end
+
+  def self.show_fill_styles
+    puts '== fill =='
+    if defined?(RubyProgress::Fill::FILL_STYLES)
+      RubyProgress::Fill::FILL_STYLES.each do |name, style|
+        puts "#{name.to_s.ljust(10)} - #{style[:empty]} #{style[:full]}"
+      end
+    else
+      puts 'blocks     - ▱ ▰'
+      puts 'classic    - - ='
+      puts 'dots       - · ●'
     end
   end
 
@@ -1114,5 +1139,7 @@ class TwirlSpinner
     end
   end
 end
+
+require_relative '../lib/ruby-progress/fill_cli'
 
 PrgCLI.run
