@@ -1,13 +1,12 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-require 'optparse'
-require 'json'
+require_relative 'twirl_options'
 
 # Twirl CLI (extracted from bin/prg)
 module TwirlCLI
   def self.run
-    options = parse_cli_options
+    options = TwirlCLI::Options.parse_cli_options
 
     if options[:status]
       pid_file = resolve_pid_file(options, :status_name)
