@@ -83,5 +83,12 @@ module RubyProgress
 
       [start_chars, end_chars]
     end
+
+    # Validate ends string: must be non-empty and even-length (handles multi-byte chars)
+    def self.ends_valid?(ends_string)
+      return false unless ends_string && !ends_string.empty?
+      chars = ends_string.each_char.to_a
+      !chars.empty? && (chars.length % 2).zero?
+    end
   end
 end
