@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-10-11
+
+### Added
+
+- **--ends flag for all commands**: New universal option to add start/end characters around animations
+  - Accepts even-length strings split in half for start and end characters
+  - Works across all three commands: ripple, worm, and twirl
+  - Examples: `--ends "[]"` → `[animation]`, `--ends "<<>>"` → `<<animation>>`
+  - Multi-byte character support for emojis: `--ends "🎯🎪"` → `🎯animation🎪`
+  - Graceful fallback for invalid input (odd-length strings)
+
+- **Comprehensive test coverage for new features**: Added extensive test suites
+  - Direction control tests: Forward-only vs bidirectional animation behavior
+  - Custom style tests: ASCII, Unicode, emoji, and mixed character pattern validation
+  - CLI integration tests: End-to-end testing for all new command-line options
+  - Ends functionality tests: Multi-byte character handling, error cases, help documentation
+  - Total: 58 new test examples covering all edge cases
+
+- **Worm direction control**: Fine-grained animation movement control
+  - `--direction forward` (or `-d f`): Animation moves only forward, resets at end
+  - `--direction bidirectional` (or `-d b`): Default back-and-forth movement
+  - Compatible with all worm styles including custom patterns
+
+- **Worm custom styles**: User-defined 3-character animation patterns
+  - Format: `--style custom=abc` where `abc` defines baseline, midline, peak characters
+  - ASCII support: `--style custom=_-=` → `___-=___`
+  - Unicode support: `--style custom=▫▪■` → geometric patterns
+  - Emoji support: `--style custom=🟦🟨🟥` → colorful animations
+  - Mixed characters: `--style custom=.🟡*` → combined ASCII and emoji
+  - Proper multi-byte character counting for accurate 3-character validation
+
+### Enhanced
+
+- **Centralized utility functions**: Moved common functionality to `RubyProgress::Utils`
+  - `Utils.parse_ends()`: Universal start/end character parsing
+  - Eliminates code duplication across animation classes
+  - Consistent behavior and error handling
+
+- **Documentation improvements**: Updated README with comprehensive examples
+  - New common options section highlighting universal flags
+  - Detailed --ends usage examples with various character patterns
+  - Enhanced help output for all commands
+
+### Technical
+
+- **Version management**: Bumped all component versions to reflect new features
+  - Main version: 1.1.9 → 1.2.0 (new feature addition)
+  - Worm version: 1.0.4 → 1.1.0 (direction control + custom styles)
+  - Ripple version: 1.0.5 → 1.1.0 (ends support)
+  - Twirl version: 1.0.1 → 1.1.0 (ends support)
+
 ## [1.1.9] - 2025-10-10
 
 ### Fixed
