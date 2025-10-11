@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
     end
   end
   spec.bindir = 'bin'
-  spec.executables = %w[prg ripple worm twirl]
+  spec.executables = %w[prg ripple worm twirl fill]
   spec.require_paths = ['lib']
 
   # Runtime dependencies
