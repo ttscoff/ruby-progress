@@ -9,7 +9,10 @@ module WormCLI
   # the main dispatcher to keep the CLI module small and focused.
   module Options
     def self.parse_cli_options
-      options = {}
+      options = {
+        output_position: :above,
+        output_lines: 3
+      }
 
       begin
         OptionParser.new do |opts|
@@ -46,6 +49,14 @@ module WormCLI
 
           opts.on('-c', '--command COMMAND', 'Command to run (optional - runs indefinitely without)') do |command|
             options[:command] = command
+          end
+
+          opts.on('--output-position POSITION', 'Position to render captured output: above or below (default: above)') do |pos|
+            options[:output_position] = pos.to_sym
+          end
+
+          opts.on('--output-lines N', Integer, 'Number of output lines to reserve for captured output (default: 3)') do |n|
+            options[:output_lines] = n
           end
 
           opts.on('--success MESSAGE', 'Success message to display') do |text|

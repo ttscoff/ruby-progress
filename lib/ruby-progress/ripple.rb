@@ -140,6 +140,7 @@ module RubyProgress
         char = @rainbow ? char.rainbow(i) : char.extend(StringExtensions).light_white
         post = letters.slice!(0, letters.length).join.extend(StringExtensions).dark_white
       end
+      @output_capture&.redraw($stderr)
       $stderr.print "\r\e[2K#{@start_chars}#{pre}#{char}#{post}#{@end_chars}"
       $stderr.flush
     end

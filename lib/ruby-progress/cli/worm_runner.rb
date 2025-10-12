@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ModuleLength
 require 'open3'
 require 'json'
 require_relative '../utils'
+require_relative '../output_capture'
 
 # Runtime helper methods for RubyProgress::Worm
 #
@@ -56,21 +58,36 @@ module WormRunner
     stdout_content = nil
 
     begin
-      stdout_content = animate do
-        Open3.popen3(@command) do |_stdin, stdout, stderr, wait_thr|
-          captured_stdout = stdout.read
-          stderr_content = stderr.read
-          exit_code = wait_thr.value.exitstatus
+      stdout_content = if $stdout.tty? && @output_stdout
+                         oc = RubyProgress::OutputCapture.new(
+                           command: @command,
+                           lines: @output_lines || 3,
+                           position: @output_position || :above
+                         )
+                         oc.start
+                         @output_capture = oc
+                         animate do
+                           oc.wait
+                         end
+                         @output_capture = nil
+                         oc.lines.join("\n")
+                       else
+                         animate do
+                           Open3.popen3(@command) do |_stdin, stdout, stderr, wait_thr|
+                             captured_stdout = stdout.read
+                             stderr_content = stderr.read
+                             exit_code = wait_thr.value.exitstatus
 
-          unless wait_thr.value.success?
-            error_msg = @error_text || "Command failed with exit code #{exit_code}"
-            error_msg += ": #{stderr_content.strip}" if stderr_content && !stderr_content.empty?
-            raise StandardError, error_msg
-          end
+                             unless wait_thr.value.success?
+                               error_msg = @error_text || "Command failed with exit code #{exit_code}"
+                               error_msg += ": #{stderr_content.strip}" if stderr_content && !stderr_content.empty?
+                               raise StandardError, error_msg
+                             end
 
-          captured_stdout
-        end
-      end
+                             captured_stdout
+                           end
+                         end
+                       end
 
       puts stdout_content if @output_stdout && stdout_content
     rescue StandardError
@@ -161,6 +178,7 @@ module WormRunner
     @direction ||= 1
 
     message_part = @message && !@message.empty? ? "#{@message} " : ''
+    @output_capture&.redraw($stderr)
     $stderr.print "\r\e[2K#{@start_chars}#{message_part}#{generate_dots(@position, @direction)}#{@end_chars}"
     $stderr.flush
 
@@ -184,6 +202,7 @@ module WormRunner
 
     while @running
       message_part = @message && !@message.empty? ? "#{@message} " : ''
+      @output_capture&.redraw($stderr)
       $stderr.print "\r\e[2K#{@start_chars}#{message_part}#{generate_dots(position, direction)}#{@end_chars}"
       $stderr.flush
 
@@ -209,6 +228,7 @@ module WormRunner
 
     while @running && !stop_requested_proc.call
       message_part = @message && !@message.empty? ? "#{@message} " : ''
+      @output_capture&.redraw($stderr)
 
       $stderr.print "\r\e[2K"
 
@@ -258,3 +278,5 @@ module WormRunner
     dots.join
   end
 end
+
+# rubocop:enable Metrics/ModuleLength

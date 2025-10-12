@@ -2,6 +2,7 @@
 
 require 'fileutils'
 require_relative 'ripple_options'
+require_relative '../output_capture'
 
 # Enhanced Ripple CLI with unified flags (extracted from bin/prg)
 module RippleCLI
@@ -60,12 +61,26 @@ module RippleCLI
   end
 
   def self.run_with_command(text, options)
-    captured_output = nil
-    RubyProgress::Ripple.progress(text, options) do
-      captured_output = `#{options[:command]} 2>&1`
-    end
+    if $stdout.tty? && options[:output] == :stdout
+      oc = RubyProgress::OutputCapture.new(command: options[:command], lines: options[:output_lines] || 3, position: options[:output_position] || :above)
+      oc.start
 
-    success = $CHILD_STATUS.success?
+      # Create rippler and attach output capture so redraw occurs each frame
+      rippler = RubyProgress::Ripple.new(text, options)
+      rippler.instance_variable_set(:@output_capture, oc)
+
+      thread = Thread.new { loop { rippler.advance } }
+      oc.wait
+      thread.kill
+
+      captured_lines = oc.lines
+      captured_output = captured_lines.join("\n")
+      success = true
+    else
+      # Fallback to legacy capture (non-interactive / CI)
+      captured_output = `#{options[:command]} 2>&1`
+      success = $CHILD_STATUS.success?
+    end
 
     puts captured_output if options[:output] == :stdout
     if options[:success_message] || options[:complete_checkmark]

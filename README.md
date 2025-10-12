@@ -407,6 +407,15 @@ prg worm --message "Emoji ends" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 ### Capture and display command output
 prg worm --command "git status" --message "Checking status" --stdout
 
+You can reserve terminal rows for captured command output so the animation doesn't interleave with the script output. Use:
+
+- `--output-position POSITION` — `above` (default) or `below` the animation
+- `--output-lines N` — how many terminal rows to reserve for captured output (default: 3)
+
+Examples:
+
+prg worm --command "git status" --stdout --output-position above --output-lines 4
+
 ### Combine checkmarks and stdout output
 prg worm --command "echo 'Build output'" --success "Build complete!" --checkmark --stdout
 ```

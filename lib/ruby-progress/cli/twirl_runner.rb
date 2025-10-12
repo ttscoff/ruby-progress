@@ -3,6 +3,7 @@
 require 'fileutils'
 require 'json'
 require_relative 'twirl_spinner'
+require_relative '../output_capture'
 
 # Top-level runtime helper module for the Twirl CLI.
 #
@@ -22,8 +23,25 @@ module TwirlRunner
       RubyProgress::Utils.hide_cursor
       spinner_thread = Thread.new { loop { spinner.animate } }
 
-      captured_output = `#{options[:command]} 2>&1`
-      success = $CHILD_STATUS.success?
+      if $stdout.tty? && options[:stdout]
+        oc = RubyProgress::OutputCapture.new(
+          command: options[:command],
+          lines: options[:output_lines] || 3,
+          position: options[:output_position] || :above
+        )
+        oc.start
+
+        spinner.instance_variable_set(:@output_capture, oc)
+
+        # wait for command while spinner thread runs
+        oc.wait
+        captured_lines = oc.lines
+        captured_output = captured_lines.join("\n")
+        success = true
+      else
+        captured_output = `#{options[:command]} 2>&1`
+        success = $CHILD_STATUS.success?
+      end
 
       spinner_thread.kill
       RubyProgress::Utils.clear_line

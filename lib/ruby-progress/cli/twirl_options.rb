@@ -10,7 +10,10 @@ module TwirlCLI
   # so the `TwirlCLI` module stays small and focused on dispatching.
   module Options
     def self.parse_cli_options
-      options = {}
+      options = {
+        output_position: :above,
+        output_lines: 3
+      }
 
       OptionParser.new do |opts|
         opts.banner = 'Usage: prg twirl [options]'
@@ -38,6 +41,14 @@ module TwirlCLI
 
         opts.on('-c', '--command COMMAND', 'Command to run (optional - runs indefinitely without)') do |command|
           options[:command] = command
+        end
+
+        opts.on('--output-position POSITION', 'Position to render captured output: above or below (default: above)') do |pos|
+          options[:output_position] = pos.to_sym
+        end
+
+        opts.on('--output-lines N', Integer, 'Number of output lines to reserve for captured output (default: 3)') do |n|
+          options[:output_lines] = n
         end
 
         opts.on('--success MESSAGE', 'Success message to display') do |text|
