@@ -3,6 +3,7 @@
 require 'fileutils'
 require 'json'
 require_relative 'twirl_spinner'
+require_relative '../output_capture'
 
 # Top-level runtime helper module for the Twirl CLI.
 #
@@ -22,8 +23,25 @@ module TwirlRunner
       RubyProgress::Utils.hide_cursor
       spinner_thread = Thread.new { loop { spinner.animate } }
 
-      captured_output = `#{options[:command]} 2>&1`
-      success = $CHILD_STATUS.success?
+      if $stdout.tty? && options[:stdout]
+        oc = RubyProgress::OutputCapture.new(
+          command: options[:command],
+          lines: options[:output_lines] || 3,
+          position: options[:output_position] || :above
+        )
+        oc.start
+
+        spinner.instance_variable_set(:@output_capture, oc)
+
+        # wait for command while spinner thread runs
+        oc.wait
+        captured_lines = oc.lines
+        captured_output = captured_lines.join("\n")
+        success = true
+      else
+        captured_output = `#{options[:command]} 2>&1`
+        success = $CHILD_STATUS.success?
+      end
 
       spinner_thread.kill
       RubyProgress::Utils.clear_line
@@ -82,6 +100,40 @@ module TwirlRunner
 
     begin
       RubyProgress::Utils.hide_cursor
+
+      # Start job processor thread for twirl
+      job_dir = RubyProgress::Daemon.job_dir_for_pid(pid_file)
+      job_thread = Thread.new do
+        RubyProgress::Daemon.process_jobs(job_dir) do |job|
+          oc = RubyProgress::OutputCapture.new(
+            command: job['command'],
+            lines: options[:output_lines] || 3,
+            position: options[:output_position] || :above
+          )
+          oc.start
+
+          spinner.instance_variable_set(:@output_capture, oc)
+          oc.wait
+          captured = oc.lines.join("\n")
+          exit_status = oc.exit_status
+          spinner.instance_variable_set(:@output_capture, nil)
+
+          success = exit_status.to_i.zero?
+          if job['message']
+            RubyProgress::Utils.display_completion(
+              job['message'],
+              success: success,
+              show_checkmark: job['checkmark'] || false,
+              output_stream: :stdout
+            )
+          end
+
+          { 'exit_status' => exit_status, 'output' => captured }
+        rescue StandardError
+          # ignore
+        end
+      end
+
       spinner.animate until stop_requested
     ensure
       RubyProgress::Utils.clear_line
@@ -114,6 +166,7 @@ module TwirlRunner
         end
       end
 
+      job_thread&.kill
       FileUtils.rm_f(pid_file)
     end
   end

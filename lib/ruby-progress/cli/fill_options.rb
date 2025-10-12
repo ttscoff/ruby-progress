@@ -23,6 +23,8 @@ module RubyProgress
           stop: false,
           status: false,
           current: false,
+          output_position: :above,
+          output_lines: 3,
           report: false
         }
 
@@ -42,6 +44,16 @@ module RubyProgress
 
             opts.on('--ends CHARS', 'Start/end characters (even number of chars, split in half)') do |chars|
               options[:ends] = chars
+            end
+
+            opts.separator 'Output capture:'
+
+            opts.on('--output-position POSITION', 'Position to render captured output: above or below (default: above)') do |pos|
+              options[:output_position] = pos.to_sym
+            end
+
+            opts.on('--output-lines N', Integer, 'Number of output lines to reserve for captured output (default: 3)') do |n|
+              options[:output_lines] = n
             end
 
             opts.separator ''
@@ -172,6 +184,12 @@ module RubyProgress
         opts.on('--success MESSAGE', 'Success message to display on completion')
         opts.on('--error MESSAGE', 'Error message to display on cancellation')
         opts.on('--checkmark', 'Show checkmarks (✅ success, 🛑 failure)')
+
+        opts.separator ''
+        opts.separator ''
+        opts.separator 'Output capture:'
+        opts.on('--output-position POSITION', 'Position to render captured output: above or below (default: above)')
+        opts.on('--output-lines N', Integer, 'Number of output lines to reserve for captured output (default: 3)')
 
         opts.separator ''
         opts.separator 'Daemon Mode:'

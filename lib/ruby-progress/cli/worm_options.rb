@@ -9,8 +9,11 @@ module WormCLI
   # the main dispatcher to keep the CLI module small and focused.
   module Options
     def self.parse_cli_options
-      options = {}
-
+      options = {
+        output_position: :above,
+        output_lines: 3
+      }
+      # rubocop:disable Metrics/BlockLength
       begin
         OptionParser.new do |opts|
           opts.banner = 'Usage: prg worm [options]'
@@ -48,6 +51,14 @@ module WormCLI
             options[:command] = command
           end
 
+          opts.on('--output-position POSITION', 'Position to render captured output: above or below (default: above)') do |pos|
+            options[:output_position] = pos.to_sym
+          end
+
+          opts.on('--output-lines N', Integer, 'Number of output lines to reserve for captured output (default: 3)') do |n|
+            options[:output_lines] = n
+          end
+
           opts.on('--success MESSAGE', 'Success message to display') do |text|
             options[:success] = text
           end
@@ -72,6 +83,12 @@ module WormCLI
           end
 
           opts.on('--daemon-as NAME', 'Run in daemon mode with custom name (creates /tmp/ruby-progress/NAME.pid)') do |name|
+            options[:daemon] = true
+            options[:daemon_name] = name
+          end
+
+          # Accept --daemon-name as an alias for --daemon-as for compatibility
+          opts.on('--daemon-name NAME', 'Alias for --daemon-as (compat)') do |name|
             options[:daemon] = true
             options[:daemon_name] = name
           end
@@ -149,7 +166,7 @@ module WormCLI
         puts "Run 'prg worm --help' for more information."
         exit 1
       end
-
+      # rubocop:enable Metrics/BlockLength
       options
     end
   end

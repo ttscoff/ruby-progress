@@ -3,6 +3,7 @@
 require 'optparse'
 require 'fileutils'
 require_relative 'cli/fill_options'
+require_relative 'output_capture'
 
 module RubyProgress
   # CLI module for Fill command
@@ -160,6 +161,17 @@ module RubyProgress
           error: options[:error_message]
         }
 
+        # If a command is provided, capture its output and pass an OutputCapture
+        if options[:command]
+          oc = RubyProgress::OutputCapture.new(
+            command: options[:command],
+            lines: options[:output_lines] || 3,
+            position: options[:output_position] || :above
+          )
+          oc.start
+          fill_options[:output_capture] = oc
+        end
+
         fill_bar = Fill.new(fill_options)
         Fill.hide_cursor
 
@@ -171,6 +183,22 @@ module RubyProgress
             unless fill_bar.completed?
               # For non-complete percentages, show the result briefly
               sleep(0.1)
+            end
+          elsif options[:command]
+            # While the command runs, keep redrawing the bar (live redraw handled by Fill#render)
+            sleep_time = case options[:speed]
+                         when :fast then 0.1
+                         when :medium, nil then 0.2
+                         when :slow then 0.5
+                         when Numeric then 1.0 / options[:speed]
+                         else 0.3
+                         end
+
+            fill_bar.render
+            # Loop until the OutputCapture reader has finished
+            while oc.alive?
+              sleep(sleep_time)
+              fill_bar.render
             end
           else
             # Auto-advance mode
@@ -192,6 +220,8 @@ module RubyProgress
         rescue Interrupt
           fill_bar.cancel
         ensure
+          # Ensure we wait for capture thread to finish and show cursor
+          oc&.wait
           Fill.show_cursor
         end
       end

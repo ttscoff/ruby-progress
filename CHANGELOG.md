@@ -3,6 +3,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased - 2025-10-12
+
+### Added
+
+- PTY-based output capture: `RubyProgress::OutputCapture` now allows running commands under a PTY, keeps a rolling buffer of the last N lines for live redraw, and optionally writes the full streamed output to a `log_path` file.
+- File-based daemon job queue: `RubyProgress::Daemon.process_jobs` implements atomic job enqueue/claim/processing with `.processing.result` metadata files and processed-archive behavior.
+- `prg job send` CLI helper: atomically writes jobs to daemon job dirs and supports `--wait` to poll for results, `--daemon-name`, `--pid-file`, `--stdin`, and `--timeout`.
+- Integration of job processing into Ripple/Twirl/Worm daemon modes so a running daemon can accept and display job output without interrupting animations.
+- CLI options for output handling: `--output-position` and `--output-lines` to reserve terminal rows for captured output.
+
+### Changed
+
+- Job result files now merge any Hash returned by the job handler into the `.processing.result` JSON (e.g., `exit_status`, `output`, `log_path`).
+
+### Tests
+
+- Added unit and integration tests covering job enqueueing, processing, and result persistence.
+
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 

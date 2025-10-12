@@ -25,6 +25,7 @@ module RubyProgress
       @current_progress = 0
       @success_message = options[:success]
       @error_message = options[:error]
+      @output_capture = options[:output_capture]
 
       # Parse --ends characters
       if options[:ends]
@@ -82,6 +83,9 @@ module RubyProgress
 
     # Render the current progress bar to stderr
     def render
+      # First redraw captured output (if any) so it appears above/below the bar
+      @output_capture&.redraw($stderr)
+
       filled = @style[:full] * @current_progress
       empty = @style[:empty] * (@length - @current_progress)
       bar = "#{@start_chars}#{filled}#{empty}#{@end_chars}"

@@ -8,6 +8,27 @@
 
 This repository contains three different Ruby progress indicator projects: **Ripple**, **Worm**, and **Twirl**. All provide animated terminal progress indicators with different visual styles and features.
 
+## Table of Contents
+
+- [Unified Interface](#unified-interface)
+  - [Submitting jobs to a running daemon](#submitting-jobs-to-a-running-daemon)
+- [Job result schema](#job-result-schema)
+- [Example: start a daemon and send a job (simple)](#example-start-a-daemon-and-send-a-job-simple)
+- [Ripple](#ripple)
+  - [Ripple Features](#ripple-features)
+  - [Ripple Usage](#ripple-usage)
+- [Twirl](#twirl)
+- [Worm](#worm)
+  - [Daemon mode (background indicator)](#daemon-mode-background-indicator)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Universal Utilities](#universal-utilities)
+  - [Terminal Control](#terminal-control)
+  - [Completion Messages](#completion-messages)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Unified Interface
 
 The gem provides a unified `prg` command that supports all progress indicators through subcommands:
@@ -30,7 +51,6 @@ prg twirl --message "Working..." --style dots --speed fast
 
 # Run fill directly (delegates to prg)
 fill --report --percent 50
-```
 
 ### With command execution
 prg worm --command "sleep 5" --success "Completed!" --error "Failed!" --checkmark
@@ -49,52 +69,6 @@ prg worm --message "Magic" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 ### Global Options
 
 - `prg --help` - Show main help
-- `prg --version` - Show version info
-- `prg --list-styles` - Show all available styles for all subcommands
-- `prg <subcommand> --help` - Show specific subcommand help
-
-### Common Options (available for all subcommands)
-
-- `--speed SPEED` - Animation speed (fast/medium/slow or f/m/s)
-- `--message MESSAGE` - Message to display
-- `--command COMMAND` - Command to execute during animation
-- `--success MESSAGE` - Success message after completion
-- `--error MESSAGE` - Error message on failure
-- `--checkmark` - Show checkmarks (✅ success, 🛑 failure)
-- `--stdout` - Output command results to STDOUT
-- `--ends CHARS` - Start/end characters (even number of chars, split in half)
-
-### Daemon Mode (Background Progress)
-
-For shell scripts where you need a continuous progress indicator across multiple steps, use daemon mode. You can use named daemons or custom PID files.
-
-```bash
-### Start in background (uses default PID file)
-prg worm --daemon --message "Working..."
-
-### Start with a custom name (creates /tmp/ruby-progress/NAME.pid)
-prg worm --daemon-as mytask --message "Processing data..."
-
-### ... run your tasks ...
-
-### Stop with a success message and checkmark (--stop-success implies --stop)
-prg worm --stop-success "All done" --stop-checkmark
-
-### Stop a named daemon (--stop-id implies --stop)
-prg worm --stop-id mytask --stop-success "Task complete!" --stop-checkmark
-
-### Or stop with an error message and checkmark
-prg worm --stop-error "Failed during step" --stop-checkmark
-
-### Check status at any time
-prg worm --status
-prg worm --status-id mytask
-
-### Use a completely custom PID file path
-prg worm --daemon --pid-file /tmp/custom-progress.pid
-prg worm --status --pid-file /tmp/custom-progress.pid
-prg worm --stop-success "Complete" --pid-file /tmp/custom-progress.pid
-```
 
 Notes:
 
@@ -102,105 +76,66 @@ Notes:
 - `--stop-success` and `--stop-error` are mutually exclusive; whichever you provide determines the success state and icon if `--stop-checkmark` is set.
 - The indicator clears its line on shutdown and prints the final message to STDOUT.
 - `--stop-pid` is still supported for backward compatibility, but `--stop [--pid-file FILE]` is preferred.
-o- [Ruby Progress Indicators](#ruby-progress-indicators)
-- [Unified Interface](#unified-interface)
-  - [With command execution](#with-command-execution)
-  - [With start/end character decoration using --ends](#with-startend-character-decoration-using-ends)
-  - [Complex --ends patterns with emojis](#complex-ends-patterns-with-emojis)
-  - [Start in background (uses default PID file)](#start-in-background-uses-default-pid-file)
-  - [Start with a custom name (creates /tmp/ruby-progress/NAME.pid)](#start-with-a-custom-name-creates-tmpruby-progressnamepid)
-  - [... run your tasks ...](#-run-your-tasks-)
-  - [Stop with a success message and checkmark (--stop-success implies --stop)](#stop-with-a-success-message-and-checkmark-stop-success-implies-stop)
-  - [Stop a named daemon (--stop-id implies --stop)](#stop-a-named-daemon-stop-id-implies-stop)
-  - [Or stop with an error message and checkmark](#or-stop-with-an-error-message-and-checkmark)
-  - [Check status at any time](#check-status-at-any-time)
-  - [Use a completely custom PID file path](#use-a-completely-custom-pid-file-path)
-  - [Basic text animation](#basic-text-animation)
-  - [With style options](#with-style-options)
-  - [Multiple styles combined](#multiple-styles-combined)
-  - [Case transformation mode](#case-transformation-mode)
-  - [Run a command with progress animation](#run-a-command-with-progress-animation)
-  - [Simple progress block](#simple-progress-block)
-  - [With options](#with-options)
-  - [Basic spinner animation](#basic-spinner-animation)
-  - [With command execution](#with-command-execution)
-  - [Different spinner styles](#different-spinner-styles)
-  - [With success/error handling](#with-successerror-handling)
-  - [Daemon mode for background tasks](#daemon-mode-for-background-tasks)
-  - [... do other work ...](#-do-other-work-)
-  - [Run indefinitely without a command (like ripple)](#run-indefinitely-without-a-command-like-ripple)
-  - [Run a command with progress animation](#run-a-command-with-progress-animation)
-  - [Customize the animation](#customize-the-animation)
-  - [With custom error handling](#with-custom-error-handling)
-  - [With checkmarks for visual feedback](#with-checkmarks-for-visual-feedback)
-  - [Control animation direction (forward-only or bidirectional)](#control-animation-direction-forward-only-or-bidirectional)
-  - [Create custom animations with 3-character patterns](#create-custom-animations-with-3-character-patterns)
-  - [Add start/end characters around the animation](#add-startend-characters-around-the-animation)
-  - [Capture and display command output](#capture-and-display-command-output)
-  - [Combine checkmarks and stdout output](#combine-checkmarks-and-stdout-output)
-  - [Start in the background (default PID file: /tmp/ruby-progress/progress.pid)](#start-in-the-background-default-pid-file-tmpruby-progressprogresspid)
-  - [... run your tasks ...](#-run-your-tasks-)
-  - [Stop using the default PID file](#stop-using-the-default-pid-file)
-  - [Use a custom PID file](#use-a-custom-pid-file)
-  - [Stop using the matching custom PID file](#stop-using-the-matching-custom-pid-file)
-  - [Create and run animation with a block](#create-and-run-animation-with-a-block)
-  - [Your work here](#your-work-here)
-  - [With custom style and forward direction](#with-custom-style-and-forward-direction)
-  - [Or run with a command](#or-run-with-a-command)
-  - [ASCII characters](#ascii-characters)
-  - [Unicode characters](#unicode-characters)
-  - [Emojis (supports multi-byte characters)](#emojis-supports-multi-byte-characters)
-  - [Mixed ASCII and emoji](#mixed-ascii-and-emoji)
-  - [Cursor control](#cursor-control)
-  - [Basic completion message](#basic-completion-message)
-  - [With success/failure indication and checkmarks](#with-successfailure-indication-and-checkmarks)
-  - [Clear line and display completion (useful for replacing progress indicators)](#clear-line-and-display-completion-useful-for-replacing-progress-indicators)
 
-## Table of Contents
+### Submitting jobs to a running daemon
 
-- [Ruby Progress Indicators](#ruby-progress-indicators)
-  - [Unified Interface](#unified-interface)
-    - [With command execution](#with-command-execution)
-    - [With start/end character decoration using --ends](#with-startend-character-decoration-using---ends)
-    - [Complex --ends patterns with emojis](#complex---ends-patterns-with-emojis)
-  - [Table of Contents](#table-of-contents)
-  - [Ripple](#ripple)
-    - [Ripple Features](#ripple-features)
-    - [Ripple Usage](#ripple-usage)
-      - [Ripple CLI examples](#ripple-cli-examples)
-      - [Ripple Command Line Options](#ripple-command-line-options)
-    - [Ripple Library Usage](#ripple-library-usage)
-  - [Twirl](#twirl)
-    - [Twirl Features](#twirl-features)
-    - [Twirl Usage](#twirl-usage)
-      - [Command Line](#command-line)
-      - [Twirl Command Line Options](#twirl-command-line-options)
-    - [Available Spinner Styles](#available-spinner-styles)
-  - [Worm](#worm)
-    - [Worm Features](#worm-features)
-    - [Worm Usage](#worm-usage)
-      - [Command Line](#command-line-1)
-      - [Daemon mode (background indicator)](#daemon-mode-background-indicator)
-      - [Worm Command Line Options](#worm-command-line-options)
-    - [Worm Library Usage](#worm-library-usage)
-    - [Animation Styles](#animation-styles)
-      - [Circles](#circles)
-      - [Blocks](#blocks)
-      - [Geometric](#geometric)
-      - [Custom Styles](#custom-styles)
-      - [Direction Control](#direction-control)
-  - [Requirements](#requirements)
-  - [Installation](#installation)
-    - [As a Gem (Recommended)](#as-a-gem-recommended)
-    - [From Source](#from-source)
-    - [Development](#development)
-  - [Universal Utilities](#universal-utilities)
-    - [Terminal Control](#terminal-control)
-    - [Completion Messages](#completion-messages)
-  - [Contributing](#contributing)
-  - [License](#license)
+When running a long-lived daemon (for example `prg worm --daemon`), you can submit additional commands to run and have their output displayed without disrupting the animation using the `prg job send` helper.
 
+Basic usage:
 
+```bash
+# Enqueue a command to the default daemon PID
+prg job send --command "./deploy-step.sh"
+
+# Enqueue to a named daemon (creates /tmp/ruby-progress/<name>.pid)
+prg job send --daemon-name mytask --command "rsync -av ./dist/ user@host:/srv/app"
+
+# Read command from stdin (useful in scripts)
+echo "bundle exec rake db:migrate" | prg job send --stdin --daemon-name mytask
+
+# Wait for the job result and print the job result JSON (default timeout 10s)
+prg job send --daemon-name mytask --command "./deploy-step.sh" --wait --timeout 30
+```
+
+Behavior and file layout:
+
+- Jobs are written as JSON files into the daemon's job directory, which is derived from the daemon PID file. For example, a PID file `/tmp/ruby-progress/mytask.pid` maps to the job directory `/tmp/ruby-progress/mytask.jobs`.
+- The CLI writes the job atomically by first writing a `*.json.tmp` temporary file and then renaming it to `*.json`.
+- The daemon's job processor claims jobs atomically by renaming the job file to `*.processing`, writes a `*.processing.result` JSON file when finished, and moves processed jobs to `processed-*`.
+
+This mechanism allows you to submit many commands to a single running indicator and have their output shown in reserved terminal rows while the animation continues.
+
+## Job result schema
+
+When a job is processed the daemon writes a small JSON result file next to the claimed job with the suffix `.processing.result` containing at least these keys:
+
+- `id` - the job id (string)
+- `status` - `"done"` or `"error"`
+- `time` - epoch seconds when the job finished (integer)
+
+Depending on the job handler, additional keys may be present:
+
+- `exit_status` - the numeric process exit status (integer or nil if unknown)
+- `output` - a string with the last captured lines of output (if available)
+- `error` - an error message when `status` is `error`
+
+Example:
+
+```json
+{
+  "id": "8a1f6c1e-4b7a-4f2c-b0a8-9e9f1c2f1a2b",
+  "status": "done",
+  "time": 1634044800,
+  "exit_status": 0,
+  "output": "Step 1 completed\nStep 2 completed"
+}
+```
+
+This file is intended for short messages and small captured output snippets (the CLI captures the last N lines). If you need larger logs, write them to a persistent file from the command itself and include a reference in the job metadata.
+
+## Example: start a daemon and send a job (simple)
+
+Below is an example script that demonstrates starting a worm daemon, sending a job, waiting for the result, and stopping the daemon.
 ---
 
 ## Ripple
@@ -406,6 +341,15 @@ prg worm --message "Emoji ends" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 
 ### Capture and display command output
 prg worm --command "git status" --message "Checking status" --stdout
+
+You can reserve terminal rows for captured command output so the animation doesn't interleave with the script output. Use:
+
+- `--output-position POSITION` — `above` (default) or `below` the animation
+- `--output-lines N` — how many terminal rows to reserve for captured output (default: 3)
+
+Examples:
+
+prg worm --command "git status" --stdout --output-position above --output-lines 4
 
 ### Combine checkmarks and stdout output
 prg worm --command "echo 'Build output'" --success "Build complete!" --checkmark --stdout

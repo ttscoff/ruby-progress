@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'json'
+require 'securerandom'
 require_relative 'ripple_options'
+require_relative '../output_capture'
 
 # Enhanced Ripple CLI with unified flags (extracted from bin/prg)
 module RippleCLI
@@ -60,12 +63,26 @@ module RippleCLI
   end
 
   def self.run_with_command(text, options)
-    captured_output = nil
-    RubyProgress::Ripple.progress(text, options) do
-      captured_output = `#{options[:command]} 2>&1`
-    end
+    if $stdout.tty? && options[:output] == :stdout
+      oc = RubyProgress::OutputCapture.new(command: options[:command], lines: options[:output_lines] || 3, position: options[:output_position] || :above)
+      oc.start
 
-    success = $CHILD_STATUS.success?
+      # Create rippler and attach output capture so redraw occurs each frame
+      rippler = RubyProgress::Ripple.new(text, options)
+      rippler.instance_variable_set(:@output_capture, oc)
+
+      thread = Thread.new { loop { rippler.advance } }
+      oc.wait
+      thread.kill
+
+      captured_lines = oc.lines
+      captured_output = captured_lines.join("\n")
+      success = true
+    else
+      # Fallback to legacy capture (non-interactive / CI)
+      captured_output = `#{options[:command]} 2>&1`
+      success = $CHILD_STATUS.success?
+    end
 
     puts captured_output if options[:output] == :stdout
     if options[:success_message] || options[:complete_checkmark]
@@ -90,7 +107,6 @@ module RippleCLI
     pid_file = options[:pid_file] || RubyProgress::Daemon.default_pid_file
     FileUtils.mkdir_p(File.dirname(pid_file))
     File.write(pid_file, Process.pid.to_s)
-
     begin
       # For Ripple, re-use the existing animation loop via a simple loop
       RubyProgress::Utils.hide_cursor
@@ -101,6 +117,9 @@ module RippleCLI
       Signal.trap('USR1') { stop_requested = true }
       Signal.trap('TERM') { stop_requested = true }
       Signal.trap('HUP')  { stop_requested = true }
+
+      job_dir = RubyProgress::Daemon.job_dir_for_pid(pid_file)
+      job_thread = Thread.new { process_daemon_jobs_for_rippler(job_dir, rippler, options) }
 
       rippler.advance until stop_requested
     ensure
@@ -142,7 +161,49 @@ module RippleCLI
         end
       end
 
+      # stop job thread and cleanup
+      job_thread&.kill
       FileUtils.rm_f(pid_file)
+    end
+  end
+
+  def self.process_daemon_jobs_for_rippler(job_dir, rippler, options)
+    RubyProgress::Daemon.process_jobs(job_dir) do |job|
+      jid = job['id'] || SecureRandom.uuid
+      log_path = begin
+        File.join(File.dirname(job_dir), "#{jid}.log")
+      rescue StandardError
+        nil
+      end
+
+      oc = RubyProgress::OutputCapture.new(
+        command: job['command'],
+        lines: options[:output_lines] || 3,
+        position: options[:output_position] || :above,
+        log_path: log_path
+      )
+      oc.start
+
+      rippler.instance_variable_set(:@output_capture, oc)
+      oc.wait
+      captured = oc.lines.join("\n")
+      exit_status = oc.exit_status
+      rippler.instance_variable_set(:@output_capture, nil)
+
+      success = exit_status.to_i.zero?
+      if job['message']
+        RubyProgress::Utils.display_completion(
+          job['message'],
+          success: success,
+          show_checkmark: job['checkmark'] || false,
+          output_stream: :stdout
+        )
+      end
+
+      { 'exit_status' => exit_status, 'output' => captured, 'log_path' => log_path }
+    rescue StandardError
+      # ignore per-job errors; process_jobs will write result
+      nil
     end
   end
 

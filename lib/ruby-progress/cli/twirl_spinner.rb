@@ -18,6 +18,7 @@ class TwirlSpinner
   end
 
   def animate
+    @output_capture&.redraw($stderr)
     if @message && !@message.empty?
       $stderr.print "\r\e[2K#{@start_chars}#{@message} #{@frames[@index]}#{@end_chars}"
     else
