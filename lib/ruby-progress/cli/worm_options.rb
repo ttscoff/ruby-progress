@@ -13,7 +13,7 @@ module WormCLI
         output_position: :above,
         output_lines: 3
       }
-
+      # rubocop:disable Metrics/BlockLength
       begin
         OptionParser.new do |opts|
           opts.banner = 'Usage: prg worm [options]'
@@ -83,6 +83,12 @@ module WormCLI
           end
 
           opts.on('--daemon-as NAME', 'Run in daemon mode with custom name (creates /tmp/ruby-progress/NAME.pid)') do |name|
+            options[:daemon] = true
+            options[:daemon_name] = name
+          end
+
+          # Accept --daemon-name as an alias for --daemon-as for compatibility
+          opts.on('--daemon-name NAME', 'Alias for --daemon-as (compat)') do |name|
             options[:daemon] = true
             options[:daemon_name] = name
           end
@@ -160,7 +166,7 @@ module WormCLI
         puts "Run 'prg worm --help' for more information."
         exit 1
       end
-
+      # rubocop:enable Metrics/BlockLength
       options
     end
   end

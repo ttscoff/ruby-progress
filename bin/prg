@@ -7,6 +7,7 @@ require 'optparse'
 require 'json'
 require 'English'
 
+require_relative '../lib/ruby-progress/cli/job_cli'
 # Load extracted per-subcommand CLI modules
 require_relative '../lib/ruby-progress/cli/ripple_cli'
 require_relative '../lib/ruby-progress/cli/worm_cli'
@@ -20,6 +21,18 @@ module PrgCLI
       exit 1
     end
 
+    # Handle `job` subcommands early
+    if ARGV[0] && ARGV[0].downcase == 'job'
+      ARGV.shift
+      sub = ARGV.shift
+      case sub
+      when 'send'
+        JobCLI.send(ARGV)
+      else
+        puts 'job subcommands: send'
+        exit 1
+      end
+    end
     # Early scan: detect --ends flag and validate its argument before dispatching
     if (i = ARGV.index('--ends')) && ARGV[i + 1]
       ends_val = ARGV[i + 1]
@@ -111,6 +124,28 @@ module PrgCLI
 
   def self.show_fill_styles
     puts '== fill =='
+  end
+
+  # Detach the current process into a background daemon. Uses Process.daemon
+  # when available, otherwise falls back to a basic fork/exit helper. This is
+  # intentionally simple for the test environment.
+  def self.daemonize
+    if Process.respond_to?(:daemon)
+      Process.daemon(true)
+    else
+      pid = fork
+      if pid
+        # parent exits so child can continue as daemon
+        exit(0)
+      else
+        # child: detach from controlling terminal
+        begin
+          Process.setsid
+        rescue StandardError
+          nil
+        end
+      end
+    end
   end
 
   # Attempt to stop processes for the given subcommand. Return true if any
