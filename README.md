@@ -56,6 +56,7 @@ fill --report --percent 50
 prg worm --command "sleep 5" --success "Completed!" --error "Failed!" --checkmark
 prg ripple "Building..." --command "make build" --success "Build complete!" --stdout
 prg twirl --command "npm install" --message "Installing packages" --style arc
+prg fill --command "sleep 5" --success "Done!" --checkmark
 
 ### With start/end character decoration using --ends
 prg ripple "Loading data" --ends "[]" --style rainbow
