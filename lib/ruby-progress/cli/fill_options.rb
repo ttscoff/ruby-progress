@@ -48,6 +48,10 @@ module RubyProgress
 
             opts.separator 'Output capture:'
 
+            opts.on('-c', '--command COMMAND', 'Command to run and capture output (optional)') do |cmd|
+              options[:command] = cmd
+            end
+
             opts.on('--output-position POSITION', 'Position to render captured output: above or below (default: above)') do |pos|
               options[:output_position] = pos.to_sym
             end
