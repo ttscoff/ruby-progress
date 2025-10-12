@@ -27,6 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Merge commit: 99d9c39 (squash-merge of feature/output-handling)
 
+## 1.3.1 - 2025-10-12
+
+### Added
+
+- `fill` subcommand: added `-c, --command COMMAND` so the determinate progress bar can run and capture command output like the other subcommands. This includes `--output-lines` and `--output-position` support for reserving terminal rows during capture.
+
+### Changed
+
+- Bumped `FILL_VERSION` (patch) to reflect the new CLI behavior.
+
 
 ## 1.2.3 - 2025-10-11
 
