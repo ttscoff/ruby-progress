@@ -65,6 +65,7 @@ module RubyProgress
       io.print "\e[#{@lines}A"            # move up @lines
       display_lines.each do |line|
         io.print "\e[2K"                  # clear line
+        io.print "\r"                     # move cursor to start of line
         io.print line[0, cols]
         io.print "\n"
       end
