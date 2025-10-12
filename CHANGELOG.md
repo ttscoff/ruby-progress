@@ -25,6 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical
 
 - Version alignment: synchronized demo script version display with actual gem version.
+
+## 1.2.4 - 2025-10-12
+
+### Added
+
+- Small bug fixes and test stability improvements:
+    - Ensured SimpleCov finalization runs reliably across Ruby versions during tests.
+    - Minor CLI help text clarifications and version constant alignment.
+
+### Changed
+
+- Bumped gem version and synchronized component version constants where applicable.
     - Messages now display cleanly at the beginning of a new line
     - Affects all three commands: ripple, worm, and twirl
     - Resolves issue where completion messages appeared mid-line after animation ended
