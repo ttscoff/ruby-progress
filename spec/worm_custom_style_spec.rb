@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 
+# rubocop:disable Metrics/BlockLength
 RSpec.describe 'Worm custom styles' do
   let(:worm) { RubyProgress::Worm.new }
 
@@ -170,3 +171,5 @@ RSpec.describe 'Worm custom styles' do
     end
   end
 end
+
+# rubocop:enable Metrics/BlockLength

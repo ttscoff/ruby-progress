@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 
+# rubocop:disable Metrics/BlockLength
 RSpec.describe RubyProgress::Fill do
   let(:fill) { described_class.new(length: 10, style: :blocks) }
 
@@ -238,3 +239,5 @@ RSpec.describe RubyProgress::Fill do
     end
   end
 end
+
+# rubocop:enable Metrics/BlockLength
