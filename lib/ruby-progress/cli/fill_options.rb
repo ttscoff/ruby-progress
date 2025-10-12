@@ -142,6 +142,52 @@ module RubyProgress
 
         options
       end
+
+      def self.help_text
+        opts = OptionParser.new
+
+        opts.banner = 'Usage: prg fill [options]'
+        opts.separator ''
+        opts.separator 'Progress Bar Options:'
+
+        opts.on('-l', '--length LENGTH', Integer, 'Progress bar length (default: 20)')
+        opts.on('-s', '--style STYLE', 'Progress bar style (blocks, classic, dots, etc. or custom=XY)')
+        opts.on('--ends CHARS', 'Start/end characters (even number of chars, split in half)')
+
+        opts.separator ''
+        opts.separator 'Progress Control:'
+        opts.on('-p', '--percent PERCENT', Float, 'Set progress to percentage (0-100)')
+        opts.on('--advance', 'Advance progress by one step')
+        opts.on('--complete', 'Complete the progress bar')
+        opts.on('--cancel', 'Cancel the progress bar')
+        opts.on('--current', 'Show current progress percentage (0-100 float)')
+        opts.on('--report', 'Show detailed progress report')
+
+        opts.separator ''
+        opts.separator 'Auto-advance Mode:'
+        opts.on('--speed SPEED', 'Auto-advance speed (fast/medium/slow or numeric)')
+
+        opts.separator ''
+        opts.separator 'Messages:'
+        opts.on('--success MESSAGE', 'Success message to display on completion')
+        opts.on('--error MESSAGE', 'Error message to display on cancellation')
+        opts.on('--checkmark', 'Show checkmarks (✅ success, 🛑 failure)')
+
+        opts.separator ''
+        opts.separator 'Daemon Mode:'
+        opts.on('--daemon', 'Run in background daemon mode')
+        opts.on('--pid-file FILE', 'PID file location (default: /tmp/ruby-progress/fill.pid)')
+        opts.on('--stop', 'Stop daemon')
+        opts.on('--status', 'Show daemon status')
+
+        opts.separator ''
+        opts.separator 'General:'
+        opts.on('--show-styles', 'Show available fill styles with visual previews')
+        opts.on('-v', '--version', 'Show version')
+        opts.on('-h', '--help', 'Show this help')
+
+        opts.to_s
+      end
     end
   end
 end

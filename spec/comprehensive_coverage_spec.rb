@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 
+# rubocop:disable Metrics/BlockLength
 RSpec.describe 'Comprehensive Coverage Tests' do
   describe 'Worm class uncovered paths' do
     let(:worm) { RubyProgress::Worm.new(message: 'Testing') }
@@ -175,3 +176,4 @@ RSpec.describe 'Comprehensive Coverage Tests' do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength

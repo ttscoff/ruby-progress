@@ -6,7 +6,6 @@
 #
 # ReadmeDemo: demos and examples intended for inclusion in the README
 # and other documentation. Keeps examples compact and easy to run.
-
 class ReadmeDemo
   def initialize
     @gem_path = File.expand_path('bin/prg', __dir__)

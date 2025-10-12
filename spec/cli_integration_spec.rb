@@ -3,6 +3,7 @@
 require 'spec_helper'
 require 'open3'
 
+# rubocop:disable Metrics/BlockLength
 RSpec.describe 'CLI Integration' do
   let(:bin_path) { File.join(File.dirname(__dir__), 'bin', 'prg') }
 
@@ -206,3 +207,5 @@ RSpec.describe 'CLI Integration' do
     end
   end
 end
+
+# rubocop:enable Metrics/BlockLength

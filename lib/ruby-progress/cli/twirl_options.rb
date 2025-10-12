@@ -4,6 +4,10 @@ require 'optparse'
 require 'json'
 
 module TwirlCLI
+  # Option parsing helpers for the Twirl subcommand.
+  #
+  # Keeps the CLI option definitions extracted from the main dispatcher
+  # so the `TwirlCLI` module stays small and focused on dispatching.
   module Options
     def self.parse_cli_options
       options = {}

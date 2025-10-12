@@ -16,6 +16,22 @@ module RubyProgress
 
         options = RubyProgress::FillCLI::Options.parse_cli_options
 
+        # Handle basic output flags first
+        if options[:help]
+          puts RubyProgress::FillCLI::Options.help_text
+          exit
+        end
+
+        if options[:version]
+          puts "Fill version #{RubyProgress::FILL_VERSION}"
+          exit
+        end
+
+        if options[:show_styles]
+          show_fill_styles
+          exit
+        end
+
         # Handle daemon control first
         if options[:status] || options[:stop]
           pid_file = options[:pid_file] || '/tmp/ruby-progress/fill.pid'
