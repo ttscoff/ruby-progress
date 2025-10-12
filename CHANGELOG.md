@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased - 2025-10-12
 
+> Placeholder for upcoming changes after v1.3.0
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## 1.3.0 - 2025-10-12
+
 ### Added
 
 - PTY-based output capture: `RubyProgress::OutputCapture` now allows running commands under a PTY, keeps a rolling buffer of the last N lines for live redraw, and optionally writes the full streamed output to a `log_path` file.
@@ -21,9 +28,10 @@ All notable changes to this project will be documented in this file.
 
 - Added unit and integration tests covering job enqueueing, processing, and result persistence.
 
+### Release notes
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+- Merge commit: 99d9c39 (squash-merge of feature/output-handling)
+
 
 ## 1.2.3 - 2025-10-11
 

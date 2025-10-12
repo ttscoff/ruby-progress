@@ -2,11 +2,11 @@
 
 module RubyProgress
   # Main gem version
-  VERSION = '1.2.4'
+  VERSION = '1.3.0'
 
-  # Component-specific versions
-  WORM_VERSION = '1.1.2'
-  TWIRL_VERSION = '1.1.2'
-  RIPPLE_VERSION = '1.1.2'
-  FILL_VERSION = '1.0.1'
+  # Component-specific versions (patch bumps)
+  WORM_VERSION = '1.1.3'
+  TWIRL_VERSION = '1.1.3'
+  RIPPLE_VERSION = '1.1.3'
+  FILL_VERSION = '1.0.2'
 end
