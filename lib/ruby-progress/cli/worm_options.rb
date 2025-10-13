@@ -8,7 +8,6 @@ module WormCLI
   # Keeps the CLI option definitions for `prg worm` extracted from
   # the main dispatcher to keep the CLI module small and focused.
   module Options
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def self.parse_cli_options
       options = {
         output_position: :above,
@@ -180,7 +179,6 @@ module WormCLI
         exit 1
       end
       # rubocop:enable Metrics/BlockLength
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
       options
     end
   end

@@ -67,4 +67,77 @@ RSpec.describe 'prg job send' do
       expect(out).to include('done')
     end
   end
+
+  it 'writes an action job when --advance is used' do
+    Dir.mktmpdir('ruby-progress-spec') do |tmp|
+      pid_file = File.join(tmp, 'progress.pid')
+      File.write(pid_file, '12345')
+
+      job_dir = File.join(File.dirname(pid_file), 'progress.jobs')
+      FileUtils.rm_rf(job_dir)
+
+      out = nil
+      orig = $stdout
+      $stdout = StringIO.new
+      begin
+        JobCLI.send(['--pid-file', pid_file, '--advance'])
+        out = $stdout.string
+      ensure
+        $stdout = orig
+      end
+
+      id = out.strip
+      final = File.join(job_dir, "#{id}.json")
+      expect(File).to exist(final)
+      payload = JSON.parse(File.read(final))
+      expect(payload['action']).to eq('advance')
+    end
+  end
+
+  it 'writes an action job with value when --percent is used' do
+    Dir.mktmpdir('ruby-progress-spec') do |tmp|
+      pid_file = File.join(tmp, 'progress.pid')
+      File.write(pid_file, '12345')
+
+      job_dir = File.join(File.dirname(pid_file), 'progress.jobs')
+      FileUtils.rm_rf(job_dir)
+
+      out = nil
+      orig = $stdout
+      $stdout = StringIO.new
+      begin
+        JobCLI.send(['--pid-file', pid_file, '--percent', '42'])
+        out = $stdout.string
+      ensure
+        $stdout = orig
+      end
+
+      id = out.strip
+      final = File.join(job_dir, "#{id}.json")
+      expect(File).to exist(final)
+      payload = JSON.parse(File.read(final))
+      expect(payload['action']).to eq('percent')
+      expect(payload['value']).to eq(42)
+    end
+  end
+
+  it 'errors when mixing --command and an action flag' do
+    Dir.mktmpdir('ruby-progress-spec') do |tmp|
+      pid_file = File.join(tmp, 'progress.pid')
+      File.write(pid_file, '12345')
+
+      # Capture stderr
+      err = nil
+      orig_err = $stderr
+      $stderr = StringIO.new
+      begin
+        expect { JobCLI.send(['--pid-file', pid_file, '--command', 'echo hi', '--advance']) }.to raise_error(SystemExit)
+        err = $stderr.string
+      ensure
+        $stderr = orig_err
+      end
+
+      expect(err).to include('Cannot specify both')
+    end
+  end
 end
