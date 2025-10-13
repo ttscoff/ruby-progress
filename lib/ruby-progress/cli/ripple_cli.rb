@@ -33,8 +33,13 @@ module RippleCLI
       )
       exit
     elsif options[:daemon]
-      # For daemon mode, detach so shell has no tracked job
-      PrgCLI.daemonize
+      # For daemon mode, detach so shell has no tracked job unless the user
+      # requested a non-detaching background child via --no-detach.
+      if options[:no_detach]
+        PrgCLI.backgroundize
+      else
+        PrgCLI.daemonize
+      end
 
       # For daemon mode, default message if none provided
       text = options[:message] || ARGV.join(' ')

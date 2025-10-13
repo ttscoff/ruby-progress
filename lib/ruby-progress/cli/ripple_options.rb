@@ -102,6 +102,10 @@ module RippleCLI
             options[:daemon] = true
           end
 
+          opts.on('--no-detach', 'When used with --daemon: run background child but do not fully detach from the terminal') do
+            options[:no_detach] = true
+          end
+
           opts.on('--pid-file FILE', 'Write process ID to file (default: /tmp/ruby-progress/progress.pid)') do |file|
             options[:pid_file] = file
           end

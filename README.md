@@ -139,6 +139,21 @@ This file is intended for short messages and small captured output snippets (the
 Below is an example script that demonstrates starting a worm daemon, sending a job, waiting for the result, and stopping the daemon.
 ---
 
+If you want the background worker to continue writing to the same terminal (so you can visually watch the animation while your script continues), use the non-detaching background mode:
+
+```bash
+# Start a named worm worker that backgrounds but does not fully detach
+prg worm --daemon-as demo --no-detach
+
+# In the same script or a subsequent command, enqueue a job to that worker
+prg job send --daemon-name demo --command "echo hello; sleep 1; echo done" --wait
+
+# Stop the worker with a success message
+prg worm --stop-id demo --stop-success "Demo finished"
+```
+
+Note: Non-detaching mode keeps the child process attached to the controlling TTY. That means both the worker and the invoking shell may write to the terminal and outputs can interleave.
+
 ## Ripple
 
 Ripple is a sophisticated text animation library that creates ripple effects across text strings in the terminal. It supports various animation modes including bidirectional movement, and rainbow colors.
