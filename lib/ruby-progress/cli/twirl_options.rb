@@ -88,6 +88,10 @@ module TwirlCLI
           options[:daemon] = true
         end
 
+        opts.on('--no-detach', 'When used with --daemon/--daemon-as: run background child but do not fully detach from the terminal') do
+          options[:no_detach] = true
+        end
+
         opts.on('--daemon-as NAME', 'Run in daemon mode with custom name (creates /tmp/ruby-progress/NAME.pid)') do |name|
           options[:daemon] = true
           options[:daemon_name] = name

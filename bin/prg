@@ -148,6 +148,21 @@ module PrgCLI
     end
   end
 
+  # Spawn a background child but do NOT fully detach from the controlling
+  # terminal. This keeps the child attached to the same TTY so animations
+  # remain visible, while the parent exits immediately allowing the caller
+  # (shell or script) to continue. Use when the user requests a non-detaching
+  # background worker (e.g. `--daemon-as NAME --no-detach`).
+  def self.backgroundize
+    pid = fork
+    return unless pid
+
+    # parent: exit so the invoking shell/script continues
+    exit(0)
+
+    # child: continue without setsid/IO close so output remains on the TTY
+  end
+
   # Attempt to stop processes for the given subcommand. Return true if any
   # process was signaled/stopped; false otherwise. Keep quiet on missing
   # processes to satisfy integration tests.

@@ -33,8 +33,14 @@ module WormCLI
       )
       exit
     elsif options[:daemon]
-      # Detach before starting daemon logic so there's no tracked shell job
-      PrgCLI.daemonize
+      # Detach (or background without detaching) before starting daemon logic
+      # so the invoking shell/script continues immediately.
+      if options[:no_detach]
+        PrgCLI.backgroundize
+      else
+        PrgCLI.daemonize
+      end
+
       run_daemon_mode(options)
     else
       progress = RubyProgress::Worm.new(options)

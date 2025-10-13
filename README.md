@@ -98,6 +98,39 @@ echo "bundle exec rake db:migrate" | prg job send --stdin --daemon-name mytask
 prg job send --daemon-name mytask --command "./deploy-step.sh" --wait --timeout 30
 ```
 
+You can also send control/action jobs (no shell command) to a running daemon. These are JSON payloads with an `action` key handled by the daemon's job processor. The helper supports a few common actions:
+
+```bash
+# Send a simple 'advance' action (no value)
+prg job send --daemon-name demo --advance
+
+# Send a 'percent' action with a numeric value
+prg job send --daemon-name demo --percent 42
+
+# Example using `fill` as a named daemon and sending percent updates
+```bash
+# Start a named fill worker (non-detaching so animation remains visible)
+prg fill --daemon-as demo --no-detach --output-lines 3 --output-position top
+
+# Send percent updates to the named worker
+prg job send --daemon-name demo --percent 10 --wait
+prg job send --daemon-name demo --percent 50 --wait
+prg job send --daemon-name demo --percent 100 --wait
+```
+
+# Or use the generic action/value pair
+prg job send --daemon-name demo --action percent --value 42
+```
+
+Note about stopping named daemons:
+
+You can target named daemons directly using the `--stop-id NAME` shorthand which implies `--stop` and targets the named daemon (it is normalized to the canonical daemon name used for the PID file). This is convenient for scripts and demos. Example:
+
+```bash
+# Stop a named fill worker with a success message
+prg fill --stop-id demo --stop-success 'Demo finished'
+```
+
 Behavior and file layout:
 
 - Jobs are written as JSON files into the daemon's job directory, which is derived from the daemon PID file. For example, a PID file `/tmp/ruby-progress/mytask.pid` maps to the job directory `/tmp/ruby-progress/mytask.jobs`.
@@ -138,6 +171,21 @@ This file is intended for short messages and small captured output snippets (the
 
 Below is an example script that demonstrates starting a worm daemon, sending a job, waiting for the result, and stopping the daemon.
 ---
+
+If you want the background worker to continue writing to the same terminal (so you can visually watch the animation while your script continues), use the non-detaching background mode:
+
+```bash
+# Start a named worm worker that backgrounds but does not fully detach
+prg worm --daemon-as demo --no-detach
+
+# In the same script or a subsequent command, enqueue a job to that worker
+prg job send --daemon-name demo --command "echo hello; sleep 1; echo done" --wait
+
+# Stop the worker with a success message
+prg worm --stop-id demo --stop-success "Demo finished"
+```
+
+Note: Non-detaching mode keeps the child process attached to the controlling TTY. That means both the worker and the invoking shell may write to the terminal and outputs can interleave.
 
 ## Ripple
 

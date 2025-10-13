@@ -62,14 +62,12 @@ module RubyProgress
                   output_stream.respond_to?(:print) ? output_stream : $stderr
                 end
 
-      # For "warn" behavior we clear the current line first. For other explicit IOs
-      # we also clear, but honor whether the IO is a TTY.
-      if output_stream == :warn || dest_io.respond_to?(:print)
-        if dest_io.respond_to?(:tty?) && dest_io.tty?
-          dest_io.print "\r\e[2K"
-        else
-          dest_io.print "\e[2K"
-        end
+      # Only treat explicit :stdout and :stderr as non-clearing requests.
+      # For :warn and any other/custom stream, clear the current line first.
+      unless %i[stdout stderr].include?(output_stream)
+        # Always include a leading carriage return when clearing to match
+        # terminal behavior expected by the test-suite.
+        dest_io.print "\r\e[2K"
         dest_io.flush if dest_io.respond_to?(:flush)
       end
 

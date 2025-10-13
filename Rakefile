@@ -108,7 +108,6 @@ namespace :markdown do
     !!(line =~ /^\s*```|^\s*~~~/)
   end
 
-  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def format_markdown(content)
     lines = content.split("\n", -1)
     out = []
@@ -167,8 +166,6 @@ namespace :markdown do
     out << '' if (last = out.last) && !last.empty?
     out.join("\n")
   end
-  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-
   desc 'Lint markdown (reports files that would be changed)'
   task :lint do
     changed = []

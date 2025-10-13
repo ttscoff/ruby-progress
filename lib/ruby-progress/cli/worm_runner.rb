@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength
 require 'open3'
 require 'json'
 require_relative '../utils'
@@ -279,5 +278,3 @@ module WormRunner
     dots.join
   end
 end
-
-# rubocop:enable Metrics/ModuleLength

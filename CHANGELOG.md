@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Added `--stop-id NAME` shorthand for targeting named daemons (implies `--stop` and normalizes the name to the canonical PID filename). This is a small convenience used by the demo and scripts.
+- Demo: updated `demo_screencast.rb` to call the local `bin/prg` when stopping the demo daemon to avoid conflicts with system-installed versions.
+
+### Changed
+
 - Bumped `FILL_VERSION` (patch) to reflect the new CLI behavior.
 
 

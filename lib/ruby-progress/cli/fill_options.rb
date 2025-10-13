@@ -28,6 +28,7 @@ module RubyProgress
           report: false
         }
 
+        # rubocop:disable Metrics/BlockLength
         begin
           OptionParser.new do |opts|
             opts.banner = 'Usage: prg fill [options]'
@@ -129,6 +130,21 @@ module RubyProgress
               options[:daemon] = true
             end
 
+            opts.on('--daemon-as NAME', 'Run in daemon mode with custom name (creates /tmp/ruby-progress/NAME.pid)') do |name|
+              options[:daemon] = true
+              options[:daemon_name] = name
+            end
+
+            # Accept --daemon-name as alias for --daemon-as
+            opts.on('--daemon-name NAME', 'Alias for --daemon-as (compat)') do |name|
+              options[:daemon] = true
+              options[:daemon_name] = name
+            end
+
+            opts.on('--no-detach', 'When used with --daemon/--daemon-as: run background child but do not fully detach from the terminal') do
+              options[:no_detach] = true
+            end
+
             opts.on('--pid-file FILE', 'PID file location (default: /tmp/ruby-progress/fill.pid)') do |file|
               options[:pid_file] = file
             end
@@ -137,9 +153,35 @@ module RubyProgress
               options[:stop] = true
             end
 
+            opts.on('--stop-id NAME', 'Stop daemon by name (implies --stop)') do |name|
+              # Backwards-compatible shorthand used in demos: set stop flag
+              options[:stop] = true
+              # Normalize to canonical keys used by FillCLI (daemon_name/status_name)
+              options[:stop_name] = name
+              options[:daemon_name] = name
+              options[:status_name] = name
+            end
+
             opts.on('--status', 'Show daemon status') do
               options[:status] = true
             end
+
+            opts.on('--status-id NAME', 'Show daemon status by name') do |name|
+              options[:status] = true
+              # Normalize to canonical key
+              options[:status_name] = name
+              options[:daemon_name] = name
+            end
+
+            opts.on('--stop-success MESSAGE', 'Stop daemon with success message (implies --stop)') do |msg|
+              options[:stop] = true
+              options[:stop_success] = msg
+            end
+            opts.on('--stop-error MESSAGE', 'Stop daemon with error message (implies --stop)') do |msg|
+              options[:stop] = true
+              options[:stop_error] = msg
+            end
+            opts.on('--stop-checkmark', 'When stopping, include a success checkmark') { options[:stop_checkmark] = true }
 
             opts.separator ''
             opts.separator 'General:'
@@ -156,6 +198,7 @@ module RubyProgress
               options[:help] = true
             end
           end.parse!
+        # rubocop:enable Metrics/BlockLength
         rescue OptionParser::InvalidOption => e
           warn "Invalid option: #{e.args.first}"
           warn ''
@@ -163,7 +206,6 @@ module RubyProgress
           warn "Run 'prg fill --help' for more information."
           exit 1
         end
-
         options
       end
 
