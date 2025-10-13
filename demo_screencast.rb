@@ -285,7 +285,7 @@ class ProgressDemo
 
   def show_finale
     show_section_header('Demo Complete!')
-    show_description('Ruby Progress Gem v1.3.1 - Making terminal progress beautiful! 🚀')
+    show_description('Ruby Progress Gem v1.3.2 - Making terminal progress beautiful! 🚀')
     puts
     show_description('Key features demonstrated:')
     puts "#{@colors[:description]}  • Three animation types: ripple, worm, twirl#{@colors[:reset]}"
@@ -316,7 +316,7 @@ class ProgressDemo
     puts
     puts "#{@colors[:header]}#{'=' * 60}#{@colors[:reset]}"
     puts "#{@colors[:header]}  RUBY PROGRESS GEM - DEMO SCREENCAST#{@colors[:reset]}"
-    puts "#{@colors[:header]}  Version 1.3.1 Feature Demonstration#{@colors[:reset]}"
+    puts "#{@colors[:header]}  Version 1.3.2 Feature Demonstration#{@colors[:reset]}"
     puts "#{@colors[:header]}#{'=' * 60}#{@colors[:reset]}"
     puts
   end

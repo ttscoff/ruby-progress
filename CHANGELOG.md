@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Merge commit: 99d9c39 (squash-merge of feature/output-handling)
 
-## 1.3.1 - 2025-10-12
+## 1.3.2 - 2025-10-13
 
 ### Added
 
