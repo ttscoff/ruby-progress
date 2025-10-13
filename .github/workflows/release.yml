@@ -1,66 +1,66 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+    push:
+        tags:
+            - "v*"
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+    release:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
+            - name: Set up Ruby
+              uses: ruby/setup-ruby@v1
+              with:
+                  ruby-version: "3.2"
+                  bundler-cache: true
 
-      - name: Install dependencies
-        run: |
-          gem install bundler
-          bundle install --jobs 4 --retry 3
+            - name: Install dependencies
+              run: |
+                  gem install bundler
+                  bundle install --jobs 4 --retry 3
 
-      - name: Run RuboCop
-        run: bundle exec rubocop
+            - name: Run RuboCop
+              run: bundle exec rubocop
 
-      - name: Run RSpec
-        run: bundle exec rspec
+            - name: Run RSpec
+              run: bundle exec rspec
 
-      - name: Verify tag matches version
-        run: |
-          set -eux
-          TAG=${GITHUB_REF#refs/tags/}
-          VERSION=$(ruby -r ./lib/ruby-progress/version.rb -e "print RubyProgress::VERSION")
-          if [ "$TAG" != "v$VERSION" ]; then
-            echo "Tag ($TAG) does not match lib/ruby-progress/version.rb (v$VERSION)"
-            exit 1
-          fi
+            - name: Verify tag matches version
+              run: |
+                  set -eux
+                  TAG=${GITHUB_REF#refs/tags/}
+                  VERSION=$(ruby -r ./lib/ruby-progress/version.rb -e "print RubyProgress::VERSION")
+                  if [ "$TAG" != "v$VERSION" ]; then
+                    echo "Tag ($TAG) does not match lib/ruby-progress/version.rb (v$VERSION)"
+                    exit 1
+                  fi
 
-      - name: Build gem
-        run: bundle exec rake build
+            - name: Build gem
+              run: bundle exec rake build
 
-      - name: Publish to RubyGems (dry-run)
-        env:
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          # Configure credentials only if secret is available; dry-run will work without credentials
-          if [ -n "${RUBYGEMS_API_KEY:-}" ]; then
-            printf "---\n:rubygems_api_key: %s\n" "$RUBYGEMS_API_KEY" > ~/.gem/credentials
-            chmod 0600 ~/.gem/credentials
-          fi
-          ls -1 pkg/*.gem
-          # First run performs --dry-run. To actually publish, remove --dry-run or run a separate workflow.
-          gem push pkg/*.gem --dry-run
+            - name: Publish to RubyGems (dry-run)
+              env:
+                  RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+              run: |
+                  # Configure credentials only if secret is available; dry-run will work without credentials
+                  if [ -n "${RUBYGEMS_API_KEY:-}" ]; then
+                    printf "---\n:rubygems_api_key: %s\n" "$RUBYGEMS_API_KEY" > ~/.gem/credentials
+                    chmod 0600 ~/.gem/credentials
+                  fi
+                  ls -1 pkg/*.gem
+                  # First run performs --dry-run. To actually publish, remove --dry-run or run a separate workflow.
+                  gem push pkg/*.gem --dry-run
 
-      # Uncomment and use the block below to perform a real publish (requires RUBYGEMS_API_KEY secret)
-      # - name: Publish to RubyGems (real)
-      #   if: ${{ secrets.RUBYGEMS_API_KEY != '' }}
-      #   env:
-      #     RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-      #   run: |
-      #     printf "---\n:rubygems_api_key: %s\n" "$RUBYGEMS_API_KEY" > ~/.gem/credentials
-      #     chmod 0600 ~/.gem/credentials
-      #     gem push pkg/*.gem
+            # Uncomment and use the block below to perform a real publish (requires RUBYGEMS_API_KEY secret)
+            # - name: Publish to RubyGems (real)
+            #   if: ${{ secrets.RUBYGEMS_API_KEY != '' }}
+            #   env:
+            #     RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+            #   run: |
+            #     printf "---\n:rubygems_api_key: %s\n" "$RUBYGEMS_API_KEY" > ~/.gem/credentials
+            #     chmod 0600 ~/.gem/credentials
+            #     gem push pkg/*.gem

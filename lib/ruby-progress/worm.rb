@@ -76,13 +76,14 @@ module RubyProgress
     def display_completion_message(message, success)
       return unless message
 
-      mark = ''
-      if @show_checkmark
-        mark = success ? '✅ ' : '🛑 '
-      end
-
-      # Clear animation line and output completion message on stderr
-      $stderr.print "\r\e[2K#{mark}#{message}\n"
+      # Delegate to Utils.display_completion so carriage-return and clearing
+      # behavior is consistent across all indicators and respects TTY state.
+      RubyProgress::Utils.display_completion(
+        message,
+        success: success,
+        show_checkmark: @show_checkmark,
+        output_stream: :warn
+      )
     end
 
     def parse_speed(speed_input)

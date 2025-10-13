@@ -120,7 +120,7 @@ module WormRunner
     @running = false
   end
 
-  def run_daemon_mode(success_message: nil, show_checkmark: false, control_message_file: nil)
+  def run_daemon_mode(success_message: nil, show_checkmark: false, control_message_file: nil, icons: {})
     @running = true
     stop_requested = false
 
@@ -163,7 +163,8 @@ module WormRunner
           final_message,
           success: final_success,
           show_checkmark: final_checkmark,
-          output_stream: :stdout
+          output_stream: :stdout,
+          icons: icons
         )
       end
 

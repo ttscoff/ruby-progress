@@ -10,9 +10,23 @@ require_relative '../utils'
 class TwirlSpinner
   def initialize(message, options = {})
     @message = message
-    @style = parse_style(options[:style] || 'dots')
     @speed = parse_speed(options[:speed] || 'medium')
-    @frames = RubyProgress::INDICATORS[@style] || RubyProgress::INDICATORS[:dots]
+
+    style_opt = options[:style].to_s
+    if style_opt.start_with?('custom=')
+      chars = style_opt.sub('custom=', '')
+      @frames = if chars.length >= 3
+                  chars.chars
+                elsif chars.length == 2
+                  [chars[0], chars[1], chars[1]]
+                else
+                  [chars, chars, chars]
+                end
+      @style = :custom
+    else
+      @style = parse_style(style_opt.empty? ? 'dots' : style_opt)
+      @frames = RubyProgress::INDICATORS[@style] || RubyProgress::INDICATORS[:dots]
+    end
     @start_chars, @end_chars = RubyProgress::Utils.parse_ends(options[:ends])
     @index = 0
   end
@@ -35,6 +49,8 @@ class TwirlSpinner
     return :dots unless style_input && !style_input.to_s.strip.empty?
 
     style_lower = style_input.to_s.downcase.strip
+
+    # parse_style returns a symbol key for RubyProgress::INDICATORS
 
     indicator_keys = RubyProgress::INDICATORS.keys.map(&:to_s)
     return style_lower.to_sym if indicator_keys.include?(style_lower)

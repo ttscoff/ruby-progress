@@ -86,7 +86,8 @@ module WormCLI
               job['message'],
               success: success,
               show_checkmark: job['checkmark'] || false,
-              output_stream: :stdout
+              output_stream: :stdout,
+              icons: { success: options[:success_icon], error: options[:error_icon] }
             )
           end
 
@@ -99,7 +100,8 @@ module WormCLI
       progress.run_daemon_mode(
         success_message: options[:success],
         show_checkmark: options[:checkmark],
-        control_message_file: RubyProgress::Daemon.control_message_file(pid_file)
+        control_message_file: RubyProgress::Daemon.control_message_file(pid_file),
+        icons: { success: options[:success_icon], error: options[:error_icon] }
       )
     ensure
       job_thread&.kill

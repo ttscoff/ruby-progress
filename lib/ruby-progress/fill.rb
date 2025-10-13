@@ -95,7 +95,7 @@ module RubyProgress
     end
 
     # Complete the progress bar and show success message
-    def complete(message = nil)
+    def complete(message = nil, icons: {})
       @current_progress = @length
       render
 
@@ -105,7 +105,8 @@ module RubyProgress
           completion_message,
           success: true,
           show_checkmark: true,
-          output_stream: :warn
+          output_stream: :warn,
+          icons: icons
         )
       else
         $stderr.puts # Just add a newline if no message
@@ -124,7 +125,8 @@ module RubyProgress
         error_msg,
         success: false,
         show_checkmark: true,
-        output_stream: :warn
+        output_stream: :warn,
+        icons: {}
       )
     end
 

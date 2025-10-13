@@ -58,7 +58,8 @@ module TwirlRunner
       RubyProgress::Utils.display_completion(
         final_msg,
         success: success,
-        show_checkmark: options[:checkmark]
+        show_checkmark: options[:checkmark],
+        icons: { success: options[:success_icon], error: options[:error_icon] }
       )
     end
 
@@ -78,7 +79,8 @@ module TwirlRunner
         RubyProgress::Utils.display_completion(
           options[:success] || 'Complete',
           success: true,
-          show_checkmark: options[:checkmark]
+          show_checkmark: options[:checkmark],
+          icons: { success: options[:success_icon], error: options[:error_icon] }
         )
       end
     end
@@ -124,7 +126,8 @@ module TwirlRunner
               job['message'],
               success: success,
               show_checkmark: job['checkmark'] || false,
-              output_stream: :stdout
+              output_stream: :stdout,
+              icons: { success: options[:success_icon], error: options[:error_icon] }
             )
           end
 
@@ -152,7 +155,8 @@ module TwirlRunner
               message,
               success: success_val,
               show_checkmark: check,
-              output_stream: :stdout
+              output_stream: :stdout,
+              icons: { success: options[:success_icon], error: options[:error_icon] }
             )
           end
         rescue StandardError

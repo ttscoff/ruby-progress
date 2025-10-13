@@ -63,13 +63,17 @@ module RippleCLI
   end
 
   def self.run_with_command(text, options)
-    if $stdout.tty? && options[:output] == :stdout
+    if $stdout.tty?
+      # Interactive TTY: use PTY-based capture so the animation can run while the
+      # command executes. We only print captured stdout if options[:output] == :stdout.
       oc = RubyProgress::OutputCapture.new(command: options[:command], lines: options[:output_lines] || 3, position: options[:output_position] || :above)
       oc.start
 
-      # Create rippler and attach output capture so redraw occurs each frame
+      # Create rippler. Attach output capture only when the user requested
+      # live stdout display via --stdout; otherwise start the PTY reader so
+      # we can collect the child's exit status but do not call redraw.
       rippler = RubyProgress::Ripple.new(text, options)
-      rippler.instance_variable_set(:@output_capture, oc)
+      rippler.instance_variable_set(:@output_capture, oc) if options[:output] == :stdout
 
       thread = Thread.new { loop { rippler.advance } }
       oc.wait
@@ -77,17 +81,24 @@ module RippleCLI
 
       captured_lines = oc.lines
       captured_output = captured_lines.join("\n")
-      success = true
+      success = oc.exit_status.nil? || oc.exit_status.zero?
     else
-      # Fallback to legacy capture (non-interactive / CI)
+      # Non-interactive / CI: fallback to legacy synchronous capture
       captured_output = `#{options[:command]} 2>&1`
       success = $CHILD_STATUS.success?
     end
 
     puts captured_output if options[:output] == :stdout
+
     if options[:success_message] || options[:complete_checkmark]
       message = success ? options[:success_message] : options[:fail_message] || options[:success_message]
-      RubyProgress::Ripple.complete(text, message, options[:complete_checkmark], success)
+      RubyProgress::Ripple.complete(
+        text,
+        message,
+        options[:complete_checkmark],
+        success,
+        icons: { success: options[:success_icon], error: options[:error_icon] }
+      )
     end
     exit success ? 0 : 1
   end
@@ -147,7 +158,8 @@ module RippleCLI
               message,
               success: success_val,
               show_checkmark: check,
-              output_stream: :stdout
+              output_stream: :stdout,
+              icons: { success: options[:success_icon], error: options[:error_icon] }
             )
           end
         rescue StandardError
@@ -196,7 +208,8 @@ module RippleCLI
           job['message'],
           success: success,
           show_checkmark: job['checkmark'] || false,
-          output_stream: :stdout
+          output_stream: :stdout,
+          icons: { success: options[:success_icon], error: options[:error_icon] }
         )
       end
 

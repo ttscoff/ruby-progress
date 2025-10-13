@@ -63,6 +63,14 @@ module WormCLI
             options[:success] = text
           end
 
+          opts.on('--success-icon ICON', 'Custom success icon to show with completion messages') do |ic|
+            options[:success_icon] = ic
+          end
+
+          opts.on('--error-icon ICON', 'Custom error icon to show with failure messages') do |ic|
+            options[:error_icon] = ic
+          end
+
           opts.on('--error MESSAGE', 'Error message to display') do |text|
             options[:error] = text
           end

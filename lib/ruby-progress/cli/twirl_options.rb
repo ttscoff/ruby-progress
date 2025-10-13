@@ -32,6 +32,12 @@ module TwirlCLI
           options[:style] = style
         end
 
+        opts.on('-d', '--direction DIRECTION', 'Animation direction (forward/bidirectional or f/b)') do |direction|
+          # Twirl is a spinner and doesn't visibly change with direction, but accept the
+          # flag for parity with other subcommands (Worm/Ripple) so scripts can use it.
+          options[:direction] = direction =~ /^f/i ? :forward_only : :bidirectional
+        end
+
         opts.on('--ends CHARS', 'Start/end characters (even number of chars, split in half)') do |chars|
           options[:ends] = chars
         end
@@ -53,6 +59,14 @@ module TwirlCLI
 
         opts.on('--success MESSAGE', 'Success message to display') do |text|
           options[:success] = text
+        end
+
+        opts.on('--success-icon ICON', 'Custom success icon to show with completion messages') do |ic|
+          options[:success_icon] = ic
+        end
+
+        opts.on('--error-icon ICON', 'Custom error icon to show with failure messages') do |ic|
+          options[:error_icon] = ic
         end
 
         opts.on('--error MESSAGE', 'Error message to display') do |text|

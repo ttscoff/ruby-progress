@@ -154,7 +154,7 @@ module RubyProgress
       RubyProgress::Utils.show_cursor
     end
 
-    def self.complete(string, message, checkmark, success)
+    def self.complete(string, message, checkmark, success, icons: {})
       display_message = message || (checkmark ? string : nil)
       return unless display_message
 
@@ -162,7 +162,8 @@ module RubyProgress
         display_message,
         success: success,
         show_checkmark: checkmark,
-        output_stream: :warn
+        output_stream: :warn,
+        icons: icons
       )
     end
 
