@@ -155,13 +155,12 @@ module PrgCLI
   # background worker (e.g. `--daemon-as NAME --no-detach`).
   def self.backgroundize
     pid = fork
-    if pid
-      # parent: exit so the invoking shell/script continues
-      exit(0)
-    else
-      # child: continue without setsid/IO close so output remains on the TTY
-      return
-    end
+    return unless pid
+
+    # parent: exit so the invoking shell/script continues
+    exit(0)
+
+    # child: continue without setsid/IO close so output remains on the TTY
   end
 
   # Attempt to stop processes for the given subcommand. Return true if any

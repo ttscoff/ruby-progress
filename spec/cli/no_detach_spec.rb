@@ -2,6 +2,8 @@
 
 require 'spec_helper'
 require 'open3'
+require 'english'
+require 'timeout'
 
 RSpec.describe 'no-detach background mode' do
   it 'allows starting a non-detaching background worker' do
@@ -20,10 +22,14 @@ RSpec.describe 'no-detach background mode' do
     begin
       Timeout.timeout(5) { Process.wait(pid) }
     rescue Timeout::Error
-      Process.kill('TERM', pid) rescue nil
+      begin
+        Process.kill('TERM', pid)
+      rescue StandardError => _e
+        # ignore
+      end
       raise 'worker did not exit in time'
     end
 
-    expect($?.exitstatus).to be_between(0, 255)
+    expect($CHILD_STATUS.exitstatus).to be_between(0, 255)
   end
 end
