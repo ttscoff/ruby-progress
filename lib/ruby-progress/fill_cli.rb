@@ -2,11 +2,14 @@
 
 require 'optparse'
 require 'fileutils'
+require 'json'
+require 'securerandom'
 require_relative 'cli/fill_options'
 require_relative 'output_capture'
 
 module RubyProgress
   # CLI module for Fill command
+  # rubocop:disable Metrics/ClassLength
   module FillCLI
     class << self
       def run
@@ -35,11 +38,14 @@ module RubyProgress
 
         # Handle daemon control first
         if options[:status] || options[:stop]
-          pid_file = options[:pid_file] || '/tmp/ruby-progress/fill.pid'
+          pid_file = resolve_pid_file(options, :status_name)
           if options[:status]
             Daemon.show_status(pid_file)
           else
-            Daemon.stop_daemon_by_pid_file(pid_file)
+            Daemon.stop_daemon_by_pid_file(pid_file,
+                                           message: options[:stop_success],
+                                           checkmark: options[:stop_checkmark],
+                                           error: !options[:stop_error].nil?)
           end
           exit
         end
@@ -48,6 +54,17 @@ module RubyProgress
         parsed_style = parse_fill_style(options[:style])
 
         if options[:daemon]
+          # Resolve pid file and honor daemon-as/name
+          pid_file = resolve_pid_file(options, :daemon_name)
+          options[:pid_file] = pid_file
+
+          # Detach or background without detaching based on --no-detach
+          if options[:no_detach]
+            PrgCLI.backgroundize
+          else
+            PrgCLI.daemonize
+          end
+
           run_daemon_mode(options, parsed_style)
         elsif options[:current]
           show_current_percentage(options, parsed_style)
@@ -61,6 +78,14 @@ module RubyProgress
       end
 
       private
+
+      def resolve_pid_file(options, name_key = :daemon_name)
+        return options[:pid_file] if options[:pid_file]
+
+        return "/tmp/ruby-progress/#{options[name_key]}.pid" if options[name_key]
+
+        '/tmp/ruby-progress/fill.pid'
+      end
 
       def parse_fill_style(style_option)
         case style_option
@@ -76,9 +101,6 @@ module RubyProgress
       end
 
       def run_daemon_mode(options, parsed_style)
-        # For daemon mode, detach the process
-        PrgCLI.daemonize
-
         pid_file = options[:pid_file] || '/tmp/ruby-progress/fill.pid'
         FileUtils.mkdir_p(File.dirname(pid_file))
         File.write(pid_file, Process.pid.to_s)
@@ -98,6 +120,71 @@ module RubyProgress
         begin
           fill_bar.render # Show initial empty bar
 
+          # Start job processor thread for fill (so daemon can accept jobs)
+          job_dir = RubyProgress::Daemon.job_dir_for_pid(pid_file)
+          Thread.new do
+            RubyProgress::Daemon.process_jobs(job_dir) do |job|
+              jid = job['id'] || SecureRandom.uuid
+              log_path = begin
+                File.join(File.dirname(job_dir), "#{jid}.log")
+              rescue StandardError
+                nil
+              end
+
+              if job['command']
+                oc = RubyProgress::OutputCapture.new(
+                  command: job['command'],
+                  lines: options[:output_lines] || 3,
+                  position: options[:output_position] || :above,
+                  log_path: log_path
+                )
+                oc.start
+
+                fill_bar.instance_variable_set(:@output_capture, oc)
+                oc.wait
+                captured = oc.lines.join("\n")
+                exit_status = oc.exit_status
+                fill_bar.instance_variable_set(:@output_capture, nil)
+
+                success = exit_status.to_i.zero?
+                if job['message']
+                  RubyProgress::Utils.display_completion(
+                    job['message'],
+                    success: success,
+                    show_checkmark: job['checkmark'] || false,
+                    output_stream: :stdout,
+                    icons: { success: options[:success_icon], error: options[:error_icon] }
+                  )
+                end
+
+                { 'exit_status' => exit_status, 'output' => captured, 'log_path' => log_path }
+
+              elsif job['action']
+                case job['action']
+                when 'advance'
+                  fill_bar.advance
+                  { 'status' => 'done', 'action' => 'advance' }
+                when 'percent'
+                  val = job['value'] || job['percent'] || 0
+                  fill_bar.percent = val.to_f
+                  { 'status' => 'done', 'action' => 'percent', 'value' => val }
+                when 'complete'
+                  fill_bar.complete
+                  { 'status' => 'done', 'action' => 'complete' }
+                when 'cancel'
+                  fill_bar.cancel
+                  { 'status' => 'done', 'action' => 'cancel' }
+                else
+                  { 'status' => 'error', 'error' => 'unknown action' }
+                end
+              else
+                { 'status' => 'error', 'error' => 'no command or action provided' }
+              end
+            rescue StandardError
+              nil
+            end
+          end
+
           # Set up signal handlers for daemon control
           stop_requested = false
           Signal.trap('INT') { stop_requested = true }
@@ -107,51 +194,82 @@ module RubyProgress
           # Keep daemon alive until stop requested
           sleep(0.1) until stop_requested
         ensure
+          # If a control message file exists, print its contents like other CLIs
+          cmf = RubyProgress::Daemon.control_message_file(pid_file)
+          if File.exist?(cmf)
+            begin
+              data = JSON.parse(File.read(cmf))
+              message = data['message']
+              check = if data.key?('checkmark')
+                        data['checkmark'] ? true : false
+                      else
+                        false
+                      end
+
+              success_val = if data.key?('success')
+                              data['success'] ? true : false
+                            else
+                              true
+                            end
+              if message
+                RubyProgress::Utils.display_completion(
+                  message,
+                  success: success_val,
+                  show_checkmark: check,
+                  output_stream: :stdout,
+                  icons: { success: options[:success_icon], error: options[:error_icon] }
+                )
+              end
+            rescue StandardError
+              # ignore
+            ensure
+              begin
+                File.delete(cmf)
+              rescue StandardError
+                nil
+              end
+            end
+          end
+
           Fill.show_cursor
           FileUtils.rm_f(pid_file)
         end
       end
 
-      def show_current_percentage(options, _parsed_style)
-        # Just output the percentage for scripting (default to 50% for demonstration)
-        percentage = options[:percent] || 50
-        puts percentage.to_f
-      end
-
       def show_progress_report(options, parsed_style)
-        # Create a fill bar to demonstrate current progress
-        fill_options = {
-          style: parsed_style,
-          length: options[:length],
-          ends: options[:ends]
-        }
+        # Produce a simple scripting-friendly report to stdout
+        length = options[:length] || 20
+        percent = (options[:percent] || 50.0).to_f
+        style = parsed_style
 
-        fill_bar = Fill.new(fill_options)
+        fill = Fill.new(style: style, length: length)
+        fill.percent = percent
 
-        # Set percentage (default to 50% for demonstration)
-        fill_bar.percent = options[:percent] || 50
-
-        # Get detailed report
-        report = fill_bar.report
-
-        # Display the current progress bar and detailed status
-        fill_bar.render
-        puts "\nProgress Report:"
-        puts "  Progress: #{report[:progress][0]}/#{report[:progress][1]}"
-        puts "  Percent: #{report[:percent]}%"
-        puts "  Completed: #{report[:completed] ? 'Yes' : 'No'}"
-        puts "  Style: #{report[:style]}"
+        report = fill.report
+        puts 'Progress Report:'
+        puts "Progress: #{report[:progress][0]}/#{report[:progress][1]}"
+        puts "Percent: #{report[:percent]}%"
+        puts "Completed: #{report[:completed] ? 'Yes' : 'No'}"
+        puts "Style: #{report[:style].inspect}"
+        exit(0)
       end
 
       def handle_progress_commands(_options, _parsed_style)
-        # For progress commands, we assume there's a daemon running
-        # This is a simplified version - in a real implementation,
-        # we'd need IPC to communicate with the daemon
+        # For now the progress commands are only supported in daemon mode.
+        # Return a clear error to the caller (specs assert this message exists).
         warn 'Progress commands require daemon mode implementation'
-        warn "Run 'prg fill --daemon' first, then use progress commands"
-        exit 1
+        exit(1)
       end
 
+      def show_current_percentage(options, _parsed_style)
+        # For scripting and tests: print the current percentage to stdout and exit.
+        # If no explicit percent was provided, default to 50.0
+        percent = (options[:percent] || 50.0).to_f
+        $stdout.print("#{percent}\n")
+        exit(0)
+      end
+
+      # Foreground / auto-advance / command mode when not daemonizing
       def run_auto_advance_mode(options, parsed_style)
         fill_options = {
           style: parsed_style,
@@ -161,20 +279,10 @@ module RubyProgress
           error: options[:error_message]
         }
 
-        # If a command is provided, capture its output and pass an OutputCapture
-        if options[:command]
-          oc = RubyProgress::OutputCapture.new(
-            command: options[:command],
-            lines: options[:output_lines] || 3,
-            position: options[:output_position] || :above
-          )
-          oc.start
-          fill_options[:output_capture] = oc
-        end
-
         fill_bar = Fill.new(fill_options)
         Fill.hide_cursor
 
+        oc = nil
         begin
           if options[:percent]
             # Set to specific percentage
@@ -185,7 +293,19 @@ module RubyProgress
               sleep(0.1)
             end
           elsif options[:command]
-            # While the command runs, keep redrawing the bar (live redraw handled by Fill#render)
+            # Run the command with OutputCapture
+            oc = RubyProgress::OutputCapture.new(
+              command: options[:command],
+              lines: options[:output_lines] || 3,
+              position: options[:output_position] || :above,
+              log_path: nil
+            )
+            oc.start
+
+            # Attach capture to the live fill instance so it can render output
+            fill_bar.instance_variable_set(:@output_capture, oc)
+
+            # While the command runs, keep redrawing the bar
             sleep_time = case options[:speed]
                          when :fast then 0.1
                          when :medium, nil then 0.2
@@ -195,11 +315,11 @@ module RubyProgress
                          end
 
             fill_bar.render
-            # Loop until the OutputCapture reader has finished
             while oc.alive?
               sleep(sleep_time)
               fill_bar.render
             end
+            fill_bar.instance_variable_set(:@output_capture, nil)
           else
             # Auto-advance mode
             sleep_time = case options[:speed]
@@ -216,6 +336,7 @@ module RubyProgress
               fill_bar.advance
             end
           end
+
           fill_bar.complete
         rescue Interrupt
           fill_bar.cancel

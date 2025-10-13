@@ -14,6 +14,7 @@
 
 require 'io/console'
 require 'shellwords'
+require 'tmpdir'
 
 # Demo runner that exercises the major features of the ruby-progress gem
 # used by the documentation and screencast recordings.
@@ -102,10 +103,6 @@ class ProgressDemo
     run_command("#{ruby_cmd} worm --length 10 --style classic --command 'sleep 4' --success 'Classic worm' --message 'Classic'")
     pause_between_demos(2)
 
-    show_command_info('Emoji worm style')
-    run_command("#{ruby_cmd} worm --length 10 --style emoji --command 'sleep 4' --success 'Emoji worm! 🎉'")
-    pause_between_demos(2)
-
     show_command_info('Blocks worm style')
     run_command("#{ruby_cmd} worm --length 10 --style blocks --command 'sleep 4' --success 'Block worm' --message 'Blocks'")
     pause_between_demos
@@ -141,7 +138,7 @@ class ProgressDemo
     pause_between_demos(2)
 
     show_command_info('Different success icon')
-    run_command("#{ruby_cmd} twirl --command 'sleep 3' --success 'Backup completed' --success-icon '✓'")
+    run_command("#{ruby_cmd} twirl --command 'sleep 3' --success 'Backup completed' --success-icon '✓' --checkmark")
     pause_between_demos
 
     # No completion message
@@ -213,10 +210,11 @@ class ProgressDemo
 
     show_demo_header('prg job send (enqueue a job)', 'Send a job to a running daemon using the file-based job queue')
     show_command_info('Example: create a job payload and atomically enqueue it for the daemon')
-    cmd_example = %q(echo '{"command":"echo job-run; sleep 2; echo done"}' > /tmp/job.json && mv /tmp/job.json /tmp/ruby-progress.jobs/12345.json)
-    puts "#{@colors[:command]}$ #{cmd_example}#{@colors[:reset]}"
+    show_command_info('Use the bundled helper to enqueue control/action jobs:')
+    puts "#{@colors[:command]}$ prg job send --daemon-name demo --advance#{@colors[:reset]}"
+    puts "#{@colors[:command]}$ prg job send --daemon-name demo --percent 42#{@colors[:reset]}"
     puts
-    show_command_info('Alternatively use the bundled helper:')
+    show_command_info('Or enqueue a shell command:')
 
     # For the demo we run the worker in the foreground so you can see the
     # live animation and completion message inline. Daemon mode (started with
@@ -224,13 +222,64 @@ class ProgressDemo
     # jobs via the file-based queue; `prg job send` targets a background
     # daemon and prints the job result JSON, but won't show the daemon's
     # animation in the foreground.
-    show_command_info('Run the worker in the foreground (animation will be visible)')
-    run_command("#{ruby_cmd} worm --length 8 --command 'sleep 2; echo job-done' --success 'Job finished' --checkmark")
+    show_command_info('Start a named fill daemon that processes percent/action jobs')
+    # Start the fill daemon in non-detaching background mode so animation remains visible
+    run_command("#{ruby_cmd} fill --daemon-as demo --no-detach --output-lines 3 --output-position top --success 'Captured!' --checkmark")
     pause_between_demos(1)
 
-    # Stop the demo daemon and show a clean completion. Using --stop-id still works
-    # because we started the daemon with the name 'demo'.
-    run_command("#{ruby_cmd} worm --stop-id demo --stop-success 'Demo daemon stopped'")
+    show_command_info('We will enqueue several percent actions via a small shell script')
+    demo_script = <<~BASH
+          #!/usr/bin/env bash
+          set -eu
+          echo "Sending percent updates to demo daemon (atomic mktemp+mv writes)"
+
+          job_dir="/tmp/ruby-progress/demo.jobs"
+          mkdir -p "$job_dir"
+
+          enqueue_percent() {
+            percent=$1
+            # Build JSON payload
+            id=$(uuidgen 2>/dev/null || echo "job-$(date +%s%N)")
+            tmp=$(mktemp "$job_dir/${id}.json.tmp.XXXXXX")
+            printf '%s\n' '{"id":"'"${id}"'","action":"percent","value":'"${percent}"'}' > "$tmp"
+            mv "$tmp" "$job_dir/${id}.json"
+
+            # Wait for the daemon to process the job (poll for .processing.result)
+            result_path="$job_dir/${id}.json.processing.result"
+            start=$(date +%s)
+            timeout=10
+            while [ ! -f "$result_path" ]; do
+              sleep 0.1
+              now=$(date +%s)
+              if [ $((now - start)) -gt $timeout ]; then
+                echo "Timed out waiting for result for job ${id}" >&2
+                return 2
+              fi
+            done
+            cat "$result_path"
+          }
+
+          enqueue_percent 10
+          sleep 1
+          enqueue_percent 40
+          sleep 1
+          enqueue_percent 70
+          sleep 1
+          enqueue_percent 100
+
+      # After updates, stop the daemon cleanly (call local bin/prg to avoid global conflicts)
+      #{ruby_cmd} fill --stop-id demo --stop-success 'Demo daemon stopped'
+    BASH
+
+    # Show the simulated script contents
+    puts "#{@colors[:command]}$ cat demo_percent_updates.sh#{@colors[:reset]}"
+    puts demo_script
+
+    # Write and execute the script (run in a subshell so output doesn't interleave too badly)
+    script_path = File.join(Dir.tmpdir, "demo_percent_updates_#{Time.now.to_i}.sh")
+    File.write(script_path, demo_script)
+    File.chmod(0o755, script_path)
+    run_command("bash #{Shellwords.escape(script_path)}")
     pause_between_demos
   end
 
@@ -363,7 +412,7 @@ class ProgressDemo
     # sleep(seconds)
   end
 
-  def pause_between_demos(seconds = 3)
+  def pause_between_demos(seconds = 2)
     # puts "#{@colors[:dim]}[Pausing #{seconds}s between demos...]#{@colors[:reset]}"
     sleep(seconds)
   end
