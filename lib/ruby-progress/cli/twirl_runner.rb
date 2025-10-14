@@ -104,41 +104,6 @@ module TwirlRunner
     begin
       RubyProgress::Utils.hide_cursor
 
-      # Start job processor thread for twirl
-      job_dir = RubyProgress::Daemon.job_dir_for_pid(pid_file)
-      job_thread = Thread.new do
-        RubyProgress::Daemon.process_jobs(job_dir) do |job|
-          oc = RubyProgress::OutputCapture.new(
-            command: job['command'],
-            lines: options[:output_lines] || 3,
-            position: options[:output_position] || :above,
-            stream: options[:stdout] || options[:stdout_live]
-          )
-          oc.start
-
-          spinner.instance_variable_set(:@output_capture, oc)
-          oc.wait
-          captured = oc.lines.join("\n")
-          exit_status = oc.exit_status
-          spinner.instance_variable_set(:@output_capture, nil)
-
-          success = exit_status.to_i.zero?
-          if job['message']
-            RubyProgress::Utils.display_completion(
-              job['message'],
-              success: success,
-              show_checkmark: job['checkmark'] || false,
-              output_stream: :stdout,
-              icons: { success: options[:success_icon], error: options[:error_icon] }
-            )
-          end
-
-          { 'exit_status' => exit_status, 'output' => captured }
-        rescue StandardError
-          # ignore
-        end
-      end
-
       spinner.animate until stop_requested
     ensure
       RubyProgress::Utils.clear_line
@@ -172,7 +137,6 @@ module TwirlRunner
         end
       end
 
-      job_thread&.kill
       FileUtils.rm_f(pid_file)
     end
   end

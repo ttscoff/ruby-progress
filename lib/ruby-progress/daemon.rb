@@ -4,6 +4,8 @@ require 'json'
 require 'fileutils'
 
 module RubyProgress
+  # Daemon helpers for backgrounding progress indicators.
+  # Provides minimal daemonization, PID file management, and simple control-message signaling.
   module Daemon
     module_function
 
@@ -13,70 +15,6 @@ module RubyProgress
 
     def control_message_file(pid_file)
       "#{pid_file}.msg"
-    end
-
-    # Resolve a job directory for the daemon based on pid_file or name.
-    # If pid_file is '/tmp/ruby-progress/mytask.pid' -> jobs dir '/tmp/ruby-progress/mytask.jobs'
-    def job_dir_for_pid(pid_file)
-      base = File.basename(pid_file, '.*')
-      File.join(File.dirname(pid_file), "#{base}.jobs")
-    end
-
-    # Process available job files in job_dir. Each job is a JSON file with {"id","command","meta"}.
-    # This method polls the directory and yields each parsed job hash to the provided block.
-    def process_jobs(job_dir, poll_interval: 0.2)
-      FileUtils.mkdir_p(job_dir)
-
-      loop do
-        # Accept any job file ending in .json (UUID filenames are common)
-        # Ignore processed-* archives and temporary files (e.g., .tmp)
-        files = Dir.children(job_dir).select do |f|
-          f.end_with?('.json') && !f.start_with?('processed-')
-        end.sort
-
-        files.each do |f|
-          path = File.join(job_dir, f)
-          processing = "#{path}.processing"
-
-          # Claim the file atomically
-          begin
-            File.rename(path, processing)
-          rescue StandardError
-            next
-          end
-
-          job = begin
-            JSON.parse(File.read(processing))
-          rescue StandardError
-            FileUtils.rm_f(processing)
-            next
-          end
-
-          begin
-            yielded = yield(job)
-
-            # on success, write .result info and merge any returned info
-            result = { 'id' => job['id'], 'status' => 'done', 'time' => Time.now.to_i }
-            if yielded.is_a?(Hash)
-              # ensure string keys
-              extra = yielded.transform_keys(&:to_s)
-              result.merge!(extra)
-            end
-            File.write("#{processing}.result", result.to_json)
-          rescue StandardError => e
-            result = { 'id' => job['id'], 'status' => 'error', 'error' => e.message }
-            File.write("#{processing}.result", result.to_json)
-          ensure
-            begin
-              FileUtils.mv(processing, File.join(job_dir, "processed-#{f}"))
-            rescue StandardError
-              FileUtils.rm_f(processing)
-            end
-          end
-        end
-
-        sleep(poll_interval)
-      end
     end
 
     def show_status(pid_file)

@@ -2,7 +2,7 @@
 
 require 'pty'
 require 'io/console'
-require 'english'
+require 'English'
 require 'fileutils'
 
 begin

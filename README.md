@@ -11,9 +11,8 @@ This repository contains three different Ruby progress indicator projects: **Rip
 ## Table of Contents
 
 - [Unified Interface](#unified-interface)
-  - [Submitting jobs to a running daemon](#submitting-jobs-to-a-running-daemon)
-- [Job result schema](#job-result-schema)
-- [Example: start a daemon and send a job (simple)](#example-start-a-daemon-and-send-a-job-simple)
+  - [Stopping a backgrounded progress indicator](#stopping-a-backgrounded-progress-indicator)
+  - [Example: background mode demo](#example-background-mode-demo)
 - [Ripple](#ripple)
   - [Ripple Features](#ripple-features)
   - [Ripple Usage](#ripple-usage)
@@ -78,111 +77,54 @@ Notes:
 - The indicator clears its line on shutdown and prints the final message to STDOUT.
 - `--stop-pid` is still supported for backward compatibility, but `--stop [--pid-file FILE]` is preferred.
 
-### Submitting jobs to a running daemon
+### Stopping a backgrounded progress indicator
 
-When running a long-lived daemon (for example `prg worm --daemon`), you can submit additional commands to run and have their output displayed without disrupting the animation using the `prg job send` helper.
+When running a backgrounded progress indicator (for example `prg worm --daemon`), you can send a stop signal with an optional completion message using the `prg job send` helper.
 
 Basic usage:
 
 ```bash
-# Enqueue a command to the default daemon PID
-prg job send --command "./deploy-step.sh"
+# Send a stop signal to the default daemon
+prg job send
 
-# Enqueue to a named daemon (creates /tmp/ruby-progress/<name>.pid)
-prg job send --daemon-name mytask --command "rsync -av ./dist/ user@host:/srv/app"
+# Send a stop signal to a named daemon (uses /tmp/ruby-progress/<name>.pid)
+prg job send --daemon-name mytask
 
-# Read command from stdin (useful in scripts)
-echo "bundle exec rake db:migrate" | prg job send --stdin --daemon-name mytask
+# Send a stop signal with a completion message
+prg job send --daemon-name mytask --message "Deployment complete!"
 
-# Wait for the job result and print the job result JSON (default timeout 10s)
-prg job send --daemon-name mytask --command "./deploy-step.sh" --wait --timeout 30
+# Send a stop signal with a checkmark
+prg job send --daemon-name mytask --message "Build successful" --checkmark
+
+# Send a stop signal indicating an error
+prg job send --daemon-name mytask --message "Build failed" --error
 ```
 
-You can also send control/action jobs (no shell command) to a running daemon. These are JSON payloads with an `action` key handled by the daemon's job processor. The helper supports a few common actions:
+Alternatively, you can use the built-in `--stop` flags on the progress commands:
 
 ```bash
-# Send a simple 'advance' action (no value)
-prg job send --daemon-name demo --advance
+# Stop a named daemon with a success message
+prg worm --stop-id demo --stop-success 'Task completed'
 
-# Send a 'percent' action with a numeric value
-prg job send --daemon-name demo --percent 42
-
-# Example using `fill` as a named daemon and sending percent updates
-```bash
-# Start a named fill worker (non-detaching so animation remains visible)
-prg fill --daemon-as demo --no-detach --output-lines 3 --output-position top
-
-# Send percent updates to the named worker
-prg job send --daemon-name demo --percent 10 --wait
-prg job send --daemon-name demo --percent 50 --wait
-prg job send --daemon-name demo --percent 100 --wait
+# Stop with an error message
+prg worm --stop-id demo --stop-error 'Task failed'
 ```
 
-# Or use the generic action/value pair
-prg job send --daemon-name demo --action percent --value 42
-```
+## Example: background mode demo
 
-Note about stopping named daemons:
-
-You can target named daemons directly using the `--stop-id NAME` shorthand which implies `--stop` and targets the named daemon (it is normalized to the canonical daemon name used for the PID file). This is convenient for scripts and demos. Example:
+Below is an example script that demonstrates starting a backgrounded progress indicator, doing work, and stopping it with a message.
 
 ```bash
-# Stop a named fill worker with a success message
-prg fill --stop-id demo --stop-success 'Demo finished'
-```
-
-Behavior and file layout:
-
-- Jobs are written as JSON files into the daemon's job directory, which is derived from the daemon PID file. For example, a PID file `/tmp/ruby-progress/mytask.pid` maps to the job directory `/tmp/ruby-progress/mytask.jobs`.
-- The CLI writes the job atomically by first writing a `*.json.tmp` temporary file and then renaming it to `*.json`.
-- The daemon's job processor claims jobs atomically by renaming the job file to `*.processing`, writes a `*.processing.result` JSON file when finished, and moves processed jobs to `processed-*`.
-
-This mechanism allows you to submit many commands to a single running indicator and have their output shown in reserved terminal rows while the animation continues.
-
-## Job result schema
-
-When a job is processed the daemon writes a small JSON result file next to the claimed job with the suffix `.processing.result` containing at least these keys:
-
-- `id` - the job id (string)
-- `status` - `"done"` or `"error"`
-- `time` - epoch seconds when the job finished (integer)
-
-Depending on the job handler, additional keys may be present:
-
-- `exit_status` - the numeric process exit status (integer or nil if unknown)
-- `output` - a string with the last captured lines of output (if available)
-- `error` - an error message when `status` is `error`
-
-Example:
-
-```json
-{
-  "id": "8a1f6c1e-4b7a-4f2c-b0a8-9e9f1c2f1a2b",
-  "status": "done",
-  "time": 1634044800,
-  "exit_status": 0,
-  "output": "Step 1 completed\nStep 2 completed"
-}
-```
-
-This file is intended for short messages and small captured output snippets (the CLI captures the last N lines). If you need larger logs, write them to a persistent file from the command itself and include a reference in the job metadata.
-
-## Example: start a daemon and send a job (simple)
-
-Below is an example script that demonstrates starting a worm daemon, sending a job, waiting for the result, and stopping the daemon.
----
-
-If you want the background worker to continue writing to the same terminal (so you can visually watch the animation while your script continues), use the non-detaching background mode:
-
-```bash
-# Start a named worm worker that backgrounds but does not fully detach
+# Start a named worm worker that backgrounds but does not fully detach (for demos)
 prg worm --daemon-as demo --no-detach
 
-# In the same script or a subsequent command, enqueue a job to that worker
-prg job send --daemon-name demo --command "echo hello; sleep 1; echo done" --wait
+# Do some work in your script...
+sleep 2
 
 # Stop the worker with a success message
-prg worm --stop-id demo --stop-success "Demo finished"
+prg job send --daemon-name demo --message "Demo finished" --checkmark
+```
+
 ```
 
 Note: Non-detaching mode keeps the child process attached to the controlling TTY. That means both the worker and the invoking shell may write to the terminal and outputs can interleave.
