@@ -76,7 +76,8 @@ module WormCLI
             command: job['command'],
             lines: options[:output_lines] || 3,
             position: options[:output_position] || :above,
-            log_path: log_path
+            log_path: log_path,
+            stream: options[:stdout] || options[:stdout_live]
           )
           oc.start
 

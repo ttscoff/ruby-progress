@@ -5,7 +5,9 @@ require 'optparse'
 module RubyProgress
   module FillCLI
     # Option parsing extracted to reduce module length in FillCLI
+    # rubocop:disable Metrics/AbcSize, Metrics/BlockLength
     module Options
+      # rubocop :disable Metrics/MethodLength
       def self.parse_cli_options
         options = {
           style: :blocks,
@@ -28,7 +30,6 @@ module RubyProgress
           report: false
         }
 
-        # rubocop:disable Metrics/BlockLength
         begin
           OptionParser.new do |opts|
             opts.banner = 'Usage: prg fill [options]'
@@ -59,6 +60,10 @@ module RubyProgress
 
             opts.on('--output-lines N', Integer, 'Number of output lines to reserve for captured output (default: 3)') do |n|
               options[:output_lines] = n
+            end
+
+            opts.on('--stdout-live', 'Stream captured output to STDOUT as it arrives (non-blocking)') do
+              options[:stdout_live] = true
             end
 
             opts.separator ''
@@ -198,7 +203,6 @@ module RubyProgress
               options[:help] = true
             end
           end.parse!
-        # rubocop:enable Metrics/BlockLength
         rescue OptionParser::InvalidOption => e
           warn "Invalid option: #{e.args.first}"
           warn ''
@@ -208,6 +212,7 @@ module RubyProgress
         end
         options
       end
+      # rubocop :enable Metrics/MethodLength
 
       def self.help_text
         opts = OptionParser.new
@@ -261,5 +266,6 @@ module RubyProgress
         opts.to_s
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/BlockLength
   end
 end

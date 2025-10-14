@@ -57,11 +57,12 @@ module WormRunner
     stdout_content = nil
 
     begin
-      stdout_content = if $stdout.tty? && @output_stdout
+      stdout_content = if $stdout.tty? && (@output_stdout || @output_live)
                          oc = RubyProgress::OutputCapture.new(
                            command: @command,
                            lines: @output_lines || 3,
-                           position: @output_position || :above
+                           position: @output_position || :above,
+                           stream: @output_live || false
                          )
                          oc.start
                          @output_capture = oc
@@ -233,8 +234,12 @@ module WormRunner
       $stderr.print "\r\e[2K"
 
       if (frame_count % 10).zero?
-        $stderr.print "\e[1A\e[2K"
-        $stderr.print "\r"
+        # Use ANSI save/restore to clear the previous line without moving the
+        # global cursor position. This prevents the animation from erasing
+        # reserved output lines that we draw elsewhere.
+        $stderr.print "\e7"    # save
+        $stderr.print "\e[1A\e[2K\r"
+        $stderr.print "\e8"    # restore
       end
 
       $stderr.print "#{message_part}#{generate_dots(position, direction)}"

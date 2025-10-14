@@ -29,7 +29,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   # Runtime dependencies
-  # None required - uses only standard library
+  spec.add_dependency 'tty-cursor', '~> 0.7'
+  spec.add_dependency 'tty-screen', '~> 0.8'
 
   # Development dependencies
   spec.add_development_dependency 'rake', '~> 13.0'

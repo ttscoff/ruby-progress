@@ -40,6 +40,7 @@ class ProgressDemo
 
   def run
     clear_screen
+
     # show_title
 
     # Introduction
@@ -70,17 +71,17 @@ class ProgressDemo
 
     # Ripple - basic expanding circle animation
     show_demo_header('Ripple', 'Expanding circle animation for tasks with unknown duration')
-    run_command("#{ruby_cmd} ripple --command 'sleep 4' --success 'Download complete!' --checkmark PROCESSING")
+    run_command("#{ruby_cmd} ripple --command 'sleep 2' --success 'Download complete!' --checkmark PROCESSING")
     pause_between_demos
 
     # Worm - progress bar animation
     show_demo_header('Worm', 'Animated progress bar for visual feedback')
-    run_command("#{ruby_cmd} worm --length 10 --command 'sleep 5' --success 'Processing finished!' --checkmark --message 'Loading'")
+    run_command("#{ruby_cmd} worm --length 4 --command 'sleep 5' --success 'Processing finished!' --checkmark --message 'Loading'")
     pause_between_demos
 
     # Twirl - spinning indicator
     show_demo_header('Twirl', 'Classic spinning indicator for quick tasks')
-    run_command("#{ruby_cmd} twirl --command 'sleep 3' --success 'Task completed!' --checkmark")
+    run_command("#{ruby_cmd} twirl --command 'sleep 2' --success 'Task completed!' --checkmark")
     pause_between_demos
   end
 
@@ -91,17 +92,17 @@ class ProgressDemo
     show_demo_header('Ripple Styles', 'Different visual patterns')
     show_command_info('Default ripple style')
     run_command("#{ruby_cmd} ripple --command 'sleep 3' --success 'Default style' 'Rippling Progress Default Style'")
-    pause_between_demos(2)
-
-    show_command_info('Pulse style')
-    run_command("#{ruby_cmd} ripple --style pulse --command 'sleep 3' --success 'Pulse style' 'Rippling Progress'")
     pause_between_demos
+
+    # show_command_info('Pulse style')
+    # run_command("#{ruby_cmd} ripple --style pulse --command 'sleep 3' --success 'Pulse style' 'Rippling Progress'")
+    # pause_between_demos
 
     # Worm styles
     show_demo_header('Worm Styles', 'Various progress bar animations')
     show_command_info('Classic worm style')
     run_command("#{ruby_cmd} worm --length 10 --style classic --command 'sleep 4' --success 'Classic worm' --message 'Classic'")
-    pause_between_demos(2)
+    pause_between_demos
 
     show_command_info('Blocks worm style')
     run_command("#{ruby_cmd} worm --length 10 --style blocks --command 'sleep 4' --success 'Block worm' --message 'Blocks'")
@@ -111,14 +112,14 @@ class ProgressDemo
     show_demo_header('Twirl Styles', 'Different spinning patterns')
     show_command_info('Classic spinner')
     run_command("#{ruby_cmd} twirl --style classic --command 'sleep 3' --success 'Classic spin' --message 'Loading'")
-    pause_between_demos(2)
+    pause_between_demos
 
     show_command_info('Dots spinner')
     run_command("#{ruby_cmd} twirl --style dots --command 'sleep 3' --success 'Dotty!'")
-    pause_between_demos(2)
+    pause_between_demos
 
     show_command_info('Arrow spinner')
-    run_command("#{ruby_cmd} twirl --style arrow --command 'sleep 3' --success 'Arrow spin' --message 'Loading'")
+    run_command("#{ruby_cmd} twirl --style arrow --command 'sleep 2' --success 'Arrow spin' --message 'Loading'")
     pause_between_demos
   end
 
@@ -128,159 +129,165 @@ class ProgressDemo
     # Error handling
     show_demo_header('Error Handling', 'Graceful failure with custom messages')
     show_command_info('Simulating a failed task')
-    run_command("#{ruby_cmd} worm --length 10 --command 'sleep 2 && exit 1' --error 'Something went wrong!' --checkmark")
+    run_command("#{ruby_cmd} worm --length 10 --command 'sleep 3 && exit 1' --error 'Error message!' --checkmark")
     pause_between_demos
 
     # Custom colors (if supported)
     show_demo_header('Success Messages', 'Custom completion messages')
     show_command_info('Custom success message with checkmark')
     run_command("#{ruby_cmd} ripple --command 'sleep 3' --success 'Data synchronized successfully' --checkmark --message 'Syncing data...'")
-    pause_between_demos(2)
-
-    show_command_info('Different success icon')
-    run_command("#{ruby_cmd} twirl --command 'sleep 3' --success 'Backup completed' --success-icon '✓' --checkmark")
     pause_between_demos
+
+    # show_command_info('Different success icon')
+    # run_command("#{ruby_cmd} twirl --command 'sleep 3' --success 'Backup completed' --success-icon '✓' --checkmark")
+    # pause_between_demos
 
     # No completion message
     show_demo_header('Silent Completion', 'Progress without completion messages')
     show_command_info('Silent completion (no message)')
-    run_command("#{ruby_cmd} worm --length 10 --command 'sleep 3'")
+    run_command("#{ruby_cmd} worm --length 10 --command 'sleep 2'")
     pause_between_demos
   end
 
   def demo_new_features
-    show_section_header('New in v1.2.0 - Enhanced Features')
+    # show_section_header('New in v1.2.0 - Enhanced Features')
 
     # Universal --ends flag
     show_demo_header('Universal --ends Flag', 'Add decorative start/end characters')
     show_command_info("Ripple with square brackets: --ends '[]'")
-    run_command("#{ruby_cmd} ripple --ends '[]' --command 'sleep 4' --success 'Framed ripple!' 'With a frame'")
-    pause_between_demos(2)
-
-    show_command_info("Worm with angle brackets: --ends '<<>>'")
-    run_command("#{ruby_cmd} worm --length 10 --ends '<<>>' --command 'sleep 4' --success 'Angled worm!'")
-    pause_between_demos(2)
-
-    show_command_info("Twirl with emoji decoration: --ends '🎯🎪'")
-    run_command("#{ruby_cmd} twirl --ends '🎯🎪' --command 'sleep 3' --success 'Emoji decorated!'")
+    run_command("#{ruby_cmd} ripple --ends '[]' --command 'sleep 3' --success 'Framed ripple!' 'With a frame'")
     pause_between_demos
+
+    # show_command_info("Worm with angle brackets: --ends '<<>>'")
+    # run_command("#{ruby_cmd} worm --length 10 --ends '<<>>' --command 'sleep 4' --success 'Angled worm!'")
+    # pause_between_demos
+
+    # show_command_info("Twirl with emoji decoration: --ends '🎯🎪'")
+    # run_command("#{ruby_cmd} twirl --ends '🎯🎪' --command 'sleep 3' --success 'Emoji decorated!'")
+    # pause_between_demos
 
     # Worm direction control
     show_demo_header('Worm Direction Control', 'Forward-only vs bidirectional movement')
     show_command_info('Bidirectional worm (default back-and-forth)')
-    run_command("#{ruby_cmd} worm --length 10 --direction bidirectional --command 'sleep 5' --success 'Back and forth!'")
-    pause_between_demos(2)
+    run_command("#{ruby_cmd} worm --length 10 --direction bidirectional --command 'sleep 3' --speed fast --success 'Both ways'")
+    pause_between_demos
 
     show_command_info('Forward-only worm (resets at end)')
-    run_command("#{ruby_cmd} worm --length 10 --direction forward --command 'sleep 5' --success 'Always forward!'")
+    run_command("#{ruby_cmd} worm --length 5 --direction forward --command 'sleep 4' --speed fast --success 'Forward only!'")
     pause_between_demos
 
     # Custom worm styles
-    show_demo_header('Custom Worm Styles', 'User-defined 3-character patterns')
-    show_command_info('ASCII custom style: --style custom=_-=')
-    run_command("#{ruby_cmd} worm --length 10 --style custom=_-= --command 'sleep 4' --success 'Custom ASCII!'")
-    pause_between_demos(2)
+    # show_demo_header('Custom Worm Styles', 'User-defined 3-character patterns')
+    # show_command_info('ASCII custom style: --style custom=_-=')
+    # run_command("#{ruby_cmd} worm --length 10 --style custom=_-= --command 'sleep 4' --success 'Custom ASCII!'")
+    # pause_between_demos
 
     show_command_info('Unicode custom style: --style custom=▫▪■')
-    run_command("#{ruby_cmd} worm --length 10 --style custom=▫▪■ --command 'sleep 4' --success 'Custom Unicode!'")
-    pause_between_demos(2)
+    run_command("#{ruby_cmd} worm --length 10 --style custom=▫▪■ --command 'sleep 3' --speed fast --success 'Custom Unicode!'")
+    pause_between_demos
 
     show_command_info('Emoji custom style: --style custom=🟦🟨🟥')
-    run_command("#{ruby_cmd} worm --length 10 --style custom=🟦🟨🟥 --command 'sleep 4' --success 'Custom emoji!'")
+    run_command("#{ruby_cmd} worm --length 10 --style custom=🟦🟨🟥 --command 'sleep 3' --speed fast --success 'Custom emoji!'")
     pause_between_demos
 
     # Combining features
-    show_demo_header('Feature Combinations', 'Mixing multiple options together')
-    show_command_info('Custom style + direction + ends: the full package!')
-    # Split the long command string to avoid RuboCop line-length issues while preserving behavior
-    part1 = "#{ruby_cmd} worm --length 10 --style custom=.🟡* --direction forward "
-    part2 = "--ends '【】' --command 'sleep 5' --success 'Ultimate combo!' --checkmark"
-    run_command(part1 + part2)
-    pause_between_demos
+    # show_demo_header('Feature Combinations', 'Mixing multiple options together')
+    # show_command_info('Custom style + direction + ends: the full package!')
+    # # Split the long command string to avoid RuboCop line-length issues while preserving behavior
+    # part1 = "#{ruby_cmd} worm --length 10 --style custom=.🟡* --direction forward "
+    # part2 = "--ends '【】' --command 'sleep 5' --success 'Ultimate combo!' --checkmark"
+    # run_command(part1 + part2)
+    # pause_between_demos
 
     # v1.3.x additions: output capture and job queue demo snippets
-    show_section_header('New in v1.3.x - Output Capture & Job Queue')
-
-    show_demo_header('Fill --command (output capture)', 'Run a command and reserve terminal rows for output while preserving animation')
+    # show_section_header('New in v1.3.x - Output Capture & Job Queue')
+    show_demo_header('Worm --command (output capture)', 'Run a command and reserve terminal rows for output while preserving animation')
     show_command_info('Capture command stdout/stderr into reserved rows:')
-    part_a = "#{ruby_cmd} fill --command \"bash -lc 'for i in 1 2 3; do echo line:$i; sleep 1; done'\" "
-    part_b = "--output-lines 3 --output-position top --success 'Captured!' --checkmark"
+    # ensure a trailing space so flags aren't squashed onto the command string
+    part_a = %(#{ruby_cmd} worm --style blocks --length 10 --speed fast --command "ruby -e 'for i in 1..3 do; puts \\"line:\#{i}\\"; sleep 1; end'" )
+    part_b = "--stdout --success 'Captured!' --checkmark"
     run_command(part_a + part_b)
     pause_between_demos
 
-    show_demo_header('prg job send (enqueue a job)', 'Send a job to a running daemon using the file-based job queue')
-    show_command_info('Example: create a job payload and atomically enqueue it for the daemon')
-    show_command_info('Use the bundled helper to enqueue control/action jobs:')
-    puts "#{@colors[:command]}$ prg job send --daemon-name demo --advance#{@colors[:reset]}"
-    puts "#{@colors[:command]}$ prg job send --daemon-name demo --percent 42#{@colors[:reset]}"
-    puts
-    show_command_info('Or enqueue a shell command:')
-
-    # For the demo we run the worker in the foreground so you can see the
-    # live animation and completion message inline. Daemon mode (started with
-    # `--daemon` or `--daemon-as`) detaches to the background and processes
-    # jobs via the file-based queue; `prg job send` targets a background
-    # daemon and prints the job result JSON, but won't show the daemon's
-    # animation in the foreground.
-    show_command_info('Start a named fill daemon that processes percent/action jobs')
-    # Start the fill daemon in non-detaching background mode so animation remains visible
-    run_command("#{ruby_cmd} fill --daemon-as demo --no-detach --output-lines 3 --output-position top --success 'Captured!' --checkmark")
-    pause_between_demos(1)
-
-    show_command_info('We will enqueue several percent actions via a small shell script')
-    demo_script = <<~BASH
-          #!/usr/bin/env bash
-          set -eu
-          echo "Sending percent updates to demo daemon (atomic mktemp+mv writes)"
-
-          job_dir="/tmp/ruby-progress/demo.jobs"
-          mkdir -p "$job_dir"
-
-          enqueue_percent() {
-            percent=$1
-            # Build JSON payload
-            id=$(uuidgen 2>/dev/null || echo "job-$(date +%s%N)")
-            tmp=$(mktemp "$job_dir/${id}.json.tmp.XXXXXX")
-            printf '%s\n' '{"id":"'"${id}"'","action":"percent","value":'"${percent}"'}' > "$tmp"
-            mv "$tmp" "$job_dir/${id}.json"
-
-            # Wait for the daemon to process the job (poll for .processing.result)
-            result_path="$job_dir/${id}.json.processing.result"
-            start=$(date +%s)
-            timeout=10
-            while [ ! -f "$result_path" ]; do
-              sleep 0.1
-              now=$(date +%s)
-              if [ $((now - start)) -gt $timeout ]; then
-                echo "Timed out waiting for result for job ${id}" >&2
-                return 2
-              fi
-            done
-            cat "$result_path"
-          }
-
-          enqueue_percent 10
-          sleep 1
-          enqueue_percent 40
-          sleep 1
-          enqueue_percent 70
-          sleep 1
-          enqueue_percent 100
-
-      # After updates, stop the daemon cleanly (call local bin/prg to avoid global conflicts)
-      #{ruby_cmd} fill --stop-id demo --stop-success 'Demo daemon stopped'
-    BASH
-
-    # Show the simulated script contents
-    puts "#{@colors[:command]}$ cat demo_percent_updates.sh#{@colors[:reset]}"
-    puts demo_script
-
-    # Write and execute the script (run in a subshell so output doesn't interleave too badly)
-    script_path = File.join(Dir.tmpdir, "demo_percent_updates_#{Time.now.to_i}.sh")
-    File.write(script_path, demo_script)
-    File.chmod(0o755, script_path)
-    run_command("bash #{Shellwords.escape(script_path)}")
+    show_command_info('Capture command stdout/stderr and display live:')
+    part_a = %(#{ruby_cmd} worm --style blocks --length 10 --speed fast --command "ruby -e 'for i in 1..5 do; puts \\"line:\#{i}\\"; sleep 0.5; end'" )
+    part_b = "--output-lines 3 --output-position top --stdout-live --success 'Captured live!' --checkmark"
+    run_command(part_a + part_b)
     pause_between_demos
+
+    # show_demo_header('prg job send (enqueue a job)', 'Send a job to a running daemon using the file-based job queue')
+    # show_command_info('Example: create a job payload and atomically enqueue it for the daemon')
+    # show_command_info('Use the bundled helper to enqueue control/action jobs:')
+    # puts "#{@colors[:command]}$ prg job send --daemon-name demo --advance#{@colors[:reset]}"
+    # puts "#{@colors[:command]}$ prg job send --daemon-name demo --percent 42#{@colors[:reset]}"
+    # puts
+    # show_command_info('Or enqueue a shell command:')
+
+    # # For the demo we run the worker in the foreground so you can see the
+    # # live animation and completion message inline. Daemon mode (started with
+    # # `--daemon` or `--daemon-as`) detaches to the background and processes
+    # # jobs via the file-based queue; `prg job send` targets a background
+    # # daemon and prints the job result JSON, but won't show the daemon's
+    # # animation in the foreground.
+    # show_command_info('Start a named fill daemon that processes percent/action jobs')
+    # # Start the fill daemon in non-detaching background mode so animation remains visible
+    # run_command("#{ruby_cmd} fill --daemon-as demo --no-detach --output-lines 3 --output-position top --success 'Captured!' --checkmark")
+    # pause_between_demos(1)
+
+    # show_command_info('We will enqueue several percent actions via a small shell script')
+    # demo_script = <<~BASH
+    #       #!/usr/bin/env bash
+    #       set -eu
+    #       echo "Sending percent updates to demo daemon (atomic mktemp+mv writes)"
+
+    #       job_dir="/tmp/ruby-progress/demo.jobs"
+    #       mkdir -p "$job_dir"
+
+    #       enqueue_percent() {
+    #         percent=$1
+    #         # Build JSON payload
+    #         id=$(uuidgen 2>/dev/null || echo "job-$(date +%s%N)")
+    #         tmp=$(mktemp "$job_dir/${id}.json.tmp.XXXXXX")
+    #         printf '%s\n' '{"id":"'"${id}"'","action":"percent","value":'"${percent}"'}' > "$tmp"
+    #         mv "$tmp" "$job_dir/${id}.json"
+
+    #         # Wait for the daemon to process the job (poll for .processing.result)
+    #         result_path="$job_dir/${id}.json.processing.result"
+    #         start=$(date +%s)
+    #         timeout=10
+    #         while [ ! -f "$result_path" ]; do
+    #           sleep 0.1
+    #           now=$(date +%s)
+    #           if [ $((now - start)) -gt $timeout ]; then
+    #             echo "Timed out waiting for result for job ${id}" >&2
+    #             return 2
+    #           fi
+    #         done
+    #         cat "$result_path"
+    #       }
+
+    #       enqueue_percent 10
+    #       sleep 1
+    #       enqueue_percent 40
+    #       sleep 1
+    #       enqueue_percent 70
+    #       sleep 1
+    #       enqueue_percent 100
+
+    #   # After updates, stop the daemon cleanly (call local bin/prg to avoid global conflicts)
+    #   #{ruby_cmd} fill --stop-id demo --stop-success 'Demo daemon stopped'
+    # BASH
+
+    # # Show the simulated script contents
+    # puts "#{@colors[:command]}$ cat demo_percent_updates.sh#{@colors[:reset]}"
+    # puts demo_script
+
+    # # Write and execute the script (run in a subshell so output doesn't interleave too badly)
+    # script_path = File.join(Dir.tmpdir, "demo_percent_updates_#{Time.now.to_i}.sh")
+    # File.write(script_path, demo_script)
+    # File.chmod(0o755, script_path)
+    # run_command("bash #{Shellwords.escape(script_path)}")
+    # pause_between_demos
   end
 
   def show_finale
@@ -310,6 +317,7 @@ class ProgressDemo
 
   def clear_screen
     system('clear') || system('cls')
+    system('tput cup 15 0')
   end
 
   def show_title
@@ -357,7 +365,7 @@ class ProgressDemo
   # - flags (tokens starting with '-') use @colors[:flag]
   # - values use @colors[:value]
   # The function prints one character at a time to simulate typing.
-  def type_command(line, speed: 0.04)
+  def type_command(line, speed: 0.02)
     tokens = line.scan(/'[^']*'|"[^"]*"|\S+/)
     pos = 0
 
@@ -412,7 +420,7 @@ class ProgressDemo
     # sleep(seconds)
   end
 
-  def pause_between_demos(seconds = 2)
+  def pause_between_demos(seconds = 1)
     # puts "#{@colors[:dim]}[Pausing #{seconds}s between demos...]#{@colors[:reset]}"
     sleep(seconds)
   end

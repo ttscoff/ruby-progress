@@ -10,4 +10,6 @@ group :development, :test do
   gem 'rspec', '~> 3.0'
   gem 'rubocop', '~> 1.21'
   gem 'simplecov', '~> 0.21', require: false
+  gem 'tty-cursor', '~> 0.7'
+  gem 'tty-screen', '~> 0.8'
 end

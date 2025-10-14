@@ -65,6 +65,9 @@ module RubyProgress
       @error_text = options[:error]
       @show_checkmark = options[:checkmark] || false
       @output_stdout = options[:stdout] || false
+      @output_lines = options[:output_lines]
+      @output_position = options[:output_position]
+      @output_live = options[:stdout_live] || false
       @direction_mode = options[:direction] || :bidirectional
       @start_chars, @end_chars = RubyProgress::Utils.parse_ends(options[:ends])
       @running = false
@@ -197,67 +200,11 @@ module RubyProgress
       }
     end
 
-    def animation_loop
-      position = 0
-      direction = 1
-
-      while @running
-        message_part = @message && !@message.empty? ? "#{@message} " : ''
-        # Enhanced line clearing for better daemon mode behavior
-        $stderr.print "\r\e[2K#{@start_chars}#{message_part}#{generate_dots(position, direction)}#{@end_chars}"
-        $stderr.flush
-
-        sleep @speed
-
-        position += direction
-        if position >= @length - 1
-          if @direction_mode == :forward_only
-            position = 0
-          else
-            direction = -1
-          end
-        elsif position <= 0
-          direction = 1
-        end
-      end
-    end
-
-    # Enhanced animation loop for daemon mode with aggressive line clearing
-    def animation_loop_daemon_mode(stop_requested_proc: -> { false })
-      position = 0
-      direction = 1
-      frame_count = 0
-
-      while @running && !stop_requested_proc.call
-        message_part = @message && !@message.empty? ? "#{@message} " : ''
-
-        # Always clear current line
-        $stderr.print "\r\e[2K"
-
-        # Every few frames, use aggressive clearing to handle interruptions
-        if (frame_count % 10).zero?
-          $stderr.print "\e[1A\e[2K"   # Move up and clear that line too (in case of interruption)
-          $stderr.print "\r"           # Return to start
-        end
-
-        $stderr.print "#{message_part}#{generate_dots(position, direction)}"
-        $stderr.flush
-
-        sleep @speed
-        frame_count += 1
-
-        position += direction
-        if position >= @length - 1
-          if @direction_mode == :forward_only
-            position = 0
-          else
-            direction = -1
-          end
-        elsif position <= 0
-          direction = 1
-        end
-      end
-    end
+    # animation_loop and animation_loop_daemon_mode are implemented in
+    # the WormRunner module so they can share the redraw behavior that
+    # integrates with RubyProgress::OutputCapture. Do not redefine them
+    # here, otherwise the module implementations (which call
+    # @output_capture&.redraw) will be overridden.
 
     def generate_dots(ripple_position, direction)
       dots = Array.new(@length) { @style[:baseline] }

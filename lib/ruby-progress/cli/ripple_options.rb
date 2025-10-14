@@ -91,6 +91,10 @@ module RippleCLI
             options[:output] = :stdout
           end
 
+          opts.on('--stdout-live', 'Stream captured output to STDOUT as it arrives (non-blocking)') do
+            options[:stdout_live] = true
+          end
+
           opts.on('--quiet', 'Suppress all output') do
             options[:output] = :quiet
           end

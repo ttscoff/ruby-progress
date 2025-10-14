@@ -2,7 +2,7 @@
 
 module RubyProgress
   # Main gem version
-  VERSION = '1.3.2'
+  VERSION = '1.3.4'
 
   # Component-specific versions (patch bumps)
   WORM_VERSION = '1.1.4'

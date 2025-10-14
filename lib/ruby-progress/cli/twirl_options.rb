@@ -81,6 +81,10 @@ module TwirlCLI
           options[:stdout] = true
         end
 
+        opts.on('--stdout-live', 'Stream captured output to STDOUT as it arrives (non-blocking)') do
+          options[:stdout_live] = true
+        end
+
         opts.separator ''
         opts.separator 'Daemon Mode:'
 

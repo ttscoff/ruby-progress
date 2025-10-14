@@ -23,11 +23,12 @@ module TwirlRunner
       RubyProgress::Utils.hide_cursor
       spinner_thread = Thread.new { loop { spinner.animate } }
 
-      if $stdout.tty? && options[:stdout]
+      if $stdout.tty? && (options[:stdout] || options[:stdout_live])
         oc = RubyProgress::OutputCapture.new(
           command: options[:command],
           lines: options[:output_lines] || 3,
-          position: options[:output_position] || :above
+          position: options[:output_position] || :above,
+          stream: options[:stdout] || options[:stdout_live]
         )
         oc.start
 
@@ -110,7 +111,8 @@ module TwirlRunner
           oc = RubyProgress::OutputCapture.new(
             command: job['command'],
             lines: options[:output_lines] || 3,
-            position: options[:output_position] || :above
+            position: options[:output_position] || :above,
+            stream: options[:stdout] || options[:stdout_live]
           )
           oc.start
 

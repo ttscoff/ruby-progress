@@ -136,7 +136,8 @@ module RubyProgress
                   command: job['command'],
                   lines: options[:output_lines] || 3,
                   position: options[:output_position] || :above,
-                  log_path: log_path
+                  log_path: log_path,
+                  stream: options[:stdout_live]
                 )
                 oc.start
 
@@ -298,7 +299,8 @@ module RubyProgress
               command: options[:command],
               lines: options[:output_lines] || 3,
               position: options[:output_position] || :above,
-              log_path: nil
+              log_path: nil,
+              stream: options[:stdout] || options[:stdout_live]
             )
             oc.start
 

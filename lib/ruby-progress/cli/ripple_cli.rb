@@ -71,7 +71,12 @@ module RippleCLI
     if $stdout.tty?
       # Interactive TTY: use PTY-based capture so the animation can run while the
       # command executes. We only print captured stdout if options[:output] == :stdout.
-      oc = RubyProgress::OutputCapture.new(command: options[:command], lines: options[:output_lines] || 3, position: options[:output_position] || :above)
+      oc = RubyProgress::OutputCapture.new(
+        command: options[:command],
+        lines: options[:output_lines] || 3,
+        position: options[:output_position] || :above,
+        stream: options[:output] == :stdout || options[:stdout_live]
+      )
       oc.start
 
       # Create rippler. Attach output capture only when the user requested

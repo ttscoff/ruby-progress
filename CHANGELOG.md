@@ -27,6 +27,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Merge commit: 99d9c39 (squash-merge of feature/output-handling)
 
+## Unreleased
+
+### Fixed
+
+- Output capture: ensure `--output-lines N` is honored when reserving terminal rows for captured output; coerce the `lines` option to an integer and stabilize the reserve/redraw logic so live captured output does not overwrite the prompt or animation.
+
+### Changed
+
+- Prepared for next patch release.
+
+## 1.3.3 - 2025-10-14
+
+### Fixed
+
+- Output capture: ensure `--output-lines N` is honored when reserving terminal rows for captured output; coerce the `lines` option to an integer and stabilize the reserve/redraw logic so live captured output does not overwrite the prompt or animation.
+
+### Changed
+
+- Removed one-off init trace writes and cleaned debug logging. Bumped main gem `VERSION` to 1.3.3 during intermediate fixes.
+
 ## 1.3.2 - 2025-10-13
 
 ### Added
