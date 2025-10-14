@@ -9,29 +9,29 @@ RSpec.describe 'CLI --ends flag integration' do
 
   describe 'ripple --ends' do
     it 'accepts basic bracket ends' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} ripple 'Test' --ends '[]' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} ripple 'Test' --ends '[]' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts complex ends patterns' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} ripple 'Test' --ends '<<>>' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} ripple 'Test' --ends '<<>>' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'handles emoji ends' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} ripple 'Test' --ends '🎯🎪' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} ripple 'Test' --ends '🎯🎪' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'works with other ripple options' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} ripple 'Test' --ends '()' --style rainbow --speed fast 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} ripple 'Test' --ends '()' --style rainbow --speed fast 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
@@ -39,36 +39,36 @@ RSpec.describe 'CLI --ends flag integration' do
 
   describe 'worm --ends' do
     it 'accepts basic bracket ends' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} worm --message 'Test' --ends '[]' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} worm --message 'Test' --ends '[]' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts parentheses ends' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} worm --message 'Test' --ends '()' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} worm --message 'Test' --ends '()' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'handles emoji ends' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} worm --message 'Test' --ends '🔥💯' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} worm --message 'Test' --ends '🔥💯' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'works with other worm options' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} worm --message 'Test' --ends '{}' --style blocks --direction forward 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} worm --message 'Test' --ends '{}' --style blocks --direction forward 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'works with custom styles' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} worm --message 'Test' --ends '||' --style 'custom=abc' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} worm --message 'Test' --ends '||' --style 'custom=abc' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
@@ -76,29 +76,29 @@ RSpec.describe 'CLI --ends flag integration' do
 
   describe 'twirl --ends' do
     it 'accepts basic bracket ends' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} twirl --message 'Test' --ends '[]' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} twirl --message 'Test' --ends '[]' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts angle bracket ends' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} twirl --message 'Test' --ends '<<>>' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} twirl --message 'Test' --ends '<<>>' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'handles emoji ends' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} twirl --message 'Test' --ends '🚀⭐' 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} twirl --message 'Test' --ends '🚀⭐' 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'works with other twirl options' do
-      _stdout, _stderr, status = Open3.capture3(
-        "timeout 1s ruby #{bin_path} twirl --message 'Test' --ends '{}' --style dots --speed fast 2>/dev/null"
+      _stdout, _stderr, status = run_with_timeout(
+        "ruby #{bin_path} twirl --message 'Test' --ends '{}' --style dots --speed fast 2>/dev/null"
       )
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
