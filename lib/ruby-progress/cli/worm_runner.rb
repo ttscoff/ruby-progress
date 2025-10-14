@@ -70,7 +70,13 @@ module WormRunner
                            oc.wait
                          end
                          @output_capture = nil
-                         oc.lines.join("\n")
+                         # For non-live capture, flush_to handles the output directly
+                         if @output_live
+                           oc.lines.join("\n")
+                         else
+                           oc.flush_to($stdout) if @output_stdout
+                           nil # Don't return content since it's already been flushed
+                         end
                        else
                          animate do
                            Open3.popen3(@command) do |_stdin, stdout, stderr, wait_thr|
