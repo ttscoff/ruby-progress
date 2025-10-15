@@ -3,7 +3,6 @@
 require 'spec_helper'
 require 'open3'
 
-# rubocop:disable Metrics/BlockLength
 RSpec.describe 'CLI --ends flag integration' do
   let(:bin_path) { File.join(File.dirname(__dir__), 'bin', 'prg') }
 
@@ -156,4 +155,3 @@ RSpec.describe 'CLI --ends flag integration' do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength

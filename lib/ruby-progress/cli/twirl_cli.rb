@@ -26,7 +26,9 @@ module TwirlCLI
       )
       exit
     elsif options[:daemon]
-      PrgCLI.daemonize
+      # Background without detaching so spinner remains visible in current terminal
+      PrgCLI.backgroundize
+
       TwirlRunner.run_daemon_mode(options)
     elsif options[:command]
       TwirlRunner.run_with_command(options)

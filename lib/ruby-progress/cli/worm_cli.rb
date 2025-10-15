@@ -33,13 +33,8 @@ module WormCLI
       )
       exit
     elsif options[:daemon]
-      # Detach (or background without detaching) before starting daemon logic
-      # so the invoking shell/script continues immediately.
-      if options[:no_detach]
-        PrgCLI.backgroundize
-      else
-        PrgCLI.daemonize
-      end
+      # Background without detaching so worm remains visible in current terminal
+      PrgCLI.backgroundize
 
       run_daemon_mode(options)
     else

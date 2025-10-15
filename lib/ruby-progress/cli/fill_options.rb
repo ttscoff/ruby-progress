@@ -5,7 +5,7 @@ require 'optparse'
 module RubyProgress
   module FillCLI
     # Option parsing extracted to reduce module length in FillCLI
-    # rubocop:disable Metrics/AbcSize, Metrics/BlockLength
+    # rubocop:disable Metrics/AbcSize
     module Options
       # rubocop :disable Metrics/MethodLength
       def self.parse_cli_options
@@ -146,10 +146,6 @@ module RubyProgress
               options[:daemon_name] = name
             end
 
-            opts.on('--no-detach', 'When used with --daemon/--daemon-as: run background child but do not fully detach from the terminal') do
-              options[:no_detach] = true
-            end
-
             opts.on('--pid-file FILE', 'PID file location (default: /tmp/ruby-progress/fill.pid)') do |file|
               options[:pid_file] = file
             end
@@ -266,6 +262,6 @@ module RubyProgress
         opts.to_s
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/BlockLength
+    # rubocop:enable Metrics/AbcSize
   end
 end

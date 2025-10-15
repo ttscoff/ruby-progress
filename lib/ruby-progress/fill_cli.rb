@@ -58,12 +58,8 @@ module RubyProgress
           pid_file = resolve_pid_file(options, :daemon_name)
           options[:pid_file] = pid_file
 
-          # Detach or background without detaching based on --no-detach
-          if options[:no_detach]
-            PrgCLI.backgroundize
-          else
-            PrgCLI.daemonize
-          end
+          # Background without detaching so progress bar remains visible in current terminal
+          PrgCLI.backgroundize
 
           run_daemon_mode(options, parsed_style)
         elsif options[:current]

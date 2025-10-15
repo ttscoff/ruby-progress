@@ -8,6 +8,14 @@ require_relative '../output_capture'
 
 # Enhanced Ripple CLI with unified flags (extracted from bin/prg)
 module RippleCLI
+  def self.resolve_pid_file(options, name_key = :daemon_name)
+    return options[:pid_file] if options[:pid_file]
+
+    return "/tmp/ruby-progress/#{options[name_key]}.pid" if options[name_key]
+
+    RubyProgress::Daemon.default_pid_file
+  end
+
   def self.run
     trap('INT') do
       RubyProgress::Utils.show_cursor
@@ -18,11 +26,11 @@ module RippleCLI
 
     # Daemon/status/stop handling (process these without requiring text)
     if options[:status]
-      pid_file = options[:pid_file] || RubyProgress::Daemon.default_pid_file
+      pid_file = resolve_pid_file(options, :status_name)
       RubyProgress::Daemon.show_status(pid_file)
       exit
     elsif options[:stop]
-      pid_file = options[:pid_file] || RubyProgress::Daemon.default_pid_file
+      pid_file = resolve_pid_file(options, :stop_name)
       stop_msg = options[:stop_error] || options[:stop_success]
       is_error = !options[:stop_error].nil?
       RubyProgress::Daemon.stop_daemon_by_pid_file(
@@ -33,13 +41,8 @@ module RippleCLI
       )
       exit
     elsif options[:daemon]
-      # For daemon mode, detach so shell has no tracked job unless the user
-      # requested a non-detaching background child via --no-detach.
-      if options[:no_detach]
-        PrgCLI.backgroundize
-      else
-        PrgCLI.daemonize
-      end
+      # Background without detaching so ripple remains visible in current terminal
+      PrgCLI.backgroundize
 
       # For daemon mode, default message if none provided
       text = options[:message] || ARGV.join(' ')
@@ -125,7 +128,7 @@ module RippleCLI
   end
 
   def self.run_daemon_mode(text, options)
-    pid_file = options[:pid_file] || RubyProgress::Daemon.default_pid_file
+    pid_file = resolve_pid_file(options, :daemon_name)
     FileUtils.mkdir_p(File.dirname(pid_file))
     File.write(pid_file, Process.pid.to_s)
     begin
