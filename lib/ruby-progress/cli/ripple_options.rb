@@ -106,8 +106,9 @@ module RippleCLI
             options[:daemon] = true
           end
 
-          opts.on('--no-detach', 'When used with --daemon: run background child but do not fully detach from the terminal') do
-            options[:no_detach] = true
+          opts.on('--daemon-as NAME', 'Run in daemon mode with custom name (creates /tmp/ruby-progress/NAME.pid)') do |name|
+            options[:daemon] = true
+            options[:daemon_name] = name
           end
 
           opts.on('--pid-file FILE', 'Write process ID to file (default: /tmp/ruby-progress/progress.pid)') do |file|
@@ -118,8 +119,18 @@ module RippleCLI
             options[:stop] = true
           end
 
+          opts.on('--stop-id NAME', 'Stop daemon by name (automatically implies --stop)') do |name|
+            options[:stop] = true
+            options[:stop_name] = name
+          end
+
           opts.on('--status', 'Show daemon status (running/not running)') do
             options[:status] = true
+          end
+
+          opts.on('--status-id NAME', 'Show daemon status by name') do |name|
+            options[:status] = true
+            options[:status_name] = name
           end
 
           opts.on('--stop-success MESSAGE', 'When stopping, show this success message') do |msg|
@@ -135,7 +146,7 @@ module RippleCLI
           opts.separator ''
           opts.separator 'Daemon notes:'
           opts.separator '  - Do not append &; prg detaches itself and returns immediately.'
-          opts.separator '  - Use --status/--stop with optional --pid-file to control it.'
+          opts.separator '  - Use --daemon-as NAME for named daemons, or --stop-id/--status-id for named control.'
 
           opts.separator ''
           opts.separator 'General:'

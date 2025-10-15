@@ -33,13 +33,8 @@ module WormCLI
       )
       exit
     elsif options[:daemon]
-      # Detach (or background without detaching) before starting daemon logic
-      # so the invoking shell/script continues immediately.
-      if options[:no_detach]
-        PrgCLI.backgroundize
-      else
-        PrgCLI.daemonize
-      end
+      # Background without detaching so worm remains visible in current terminal
+      PrgCLI.backgroundize
 
       run_daemon_mode(options)
     else
@@ -61,49 +56,6 @@ module WormCLI
     progress = RubyProgress::Worm.new(options)
 
     begin
-      # Start job processor thread for worm
-      job_dir = RubyProgress::Daemon.job_dir_for_pid(pid_file)
-      job_thread = Thread.new do
-        RubyProgress::Daemon.process_jobs(job_dir) do |job|
-          jid = job['id'] || SecureRandom.uuid
-          log_path = begin
-            File.join(File.dirname(job_dir), "#{jid}.log")
-          rescue StandardError
-            nil
-          end
-
-          oc = RubyProgress::OutputCapture.new(
-            command: job['command'],
-            lines: options[:output_lines] || 3,
-            position: options[:output_position] || :above,
-            log_path: log_path,
-            stream: options[:stdout] || options[:stdout_live]
-          )
-          oc.start
-
-          progress.instance_variable_set(:@output_capture, oc)
-          oc.wait
-          captured = oc.lines.join("\n")
-          exit_status = oc.exit_status
-          progress.instance_variable_set(:@output_capture, nil)
-
-          success = exit_status.to_i.zero?
-          if job['message']
-            RubyProgress::Utils.display_completion(
-              job['message'],
-              success: success,
-              show_checkmark: job['checkmark'] || false,
-              output_stream: :stdout,
-              icons: { success: options[:success_icon], error: options[:error_icon] }
-            )
-          end
-
-          { 'exit_status' => exit_status, 'output' => captured, 'log_path' => log_path }
-        rescue StandardError
-          # ignore per-job errors
-        end
-      end
-
       progress.run_daemon_mode(
         success_message: options[:success],
         show_checkmark: options[:checkmark],
@@ -111,7 +63,6 @@ module WormCLI
         icons: { success: options[:success_icon], error: options[:error_icon] }
       )
     ensure
-      job_thread&.kill
       FileUtils.rm_f(pid_file)
     end
   end

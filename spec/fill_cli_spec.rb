@@ -111,7 +111,8 @@ RSpec.describe 'Fill CLI Integration' do
     it 'works with custom styles' do
       stdout, _stderr, status = Open3.capture3("ruby #{bin_path} fill --report --percent 40 --style custom=oO")
       expect(status.exitstatus).to eq(0)
-      expect(stdout).to include('Style: {empty: "o", full: "O"}')
+      # Accept either hash format: {empty: "o", full: "O"} or {:empty=>"o", :full=>"O"}
+      expect(stdout).to match(/Style:.*empty.*o.*full.*O/m)
     end
 
     it 'includes visual progress bar' do

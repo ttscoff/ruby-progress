@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 require 'open3'
-require 'english'
+require 'English'
 require 'timeout'
 
 RSpec.describe 'no-detach background mode' do

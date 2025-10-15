@@ -24,14 +24,8 @@ module PrgCLI
     # Handle `job` subcommands early
     if ARGV[0] && ARGV[0].downcase == 'job'
       ARGV.shift
-      sub = ARGV.shift
-      case sub
-      when 'send'
-        JobCLI.send(ARGV)
-      else
-        puts 'job subcommands: send'
-        exit 1
-      end
+      JobCLI.run(ARGV)
+      exit
     end
     # Early scan: detect --ends flag and validate its argument before dispatching
     if (i = ARGV.index('--ends')) && ARGV[i + 1]
@@ -151,16 +145,16 @@ module PrgCLI
   # Spawn a background child but do NOT fully detach from the controlling
   # terminal. This keeps the child attached to the same TTY so animations
   # remain visible, while the parent exits immediately allowing the caller
-  # (shell or script) to continue. Use when the user requests a non-detaching
-  # background worker (e.g. `--daemon-as NAME --no-detach`).
+  # (shell or script) to continue.
   def self.backgroundize
     pid = fork
-    return unless pid
-
-    # parent: exit so the invoking shell/script continues
-    exit(0)
-
-    # child: continue without setsid/IO close so output remains on the TTY
+    if pid
+      # Parent: detach child and exit silently
+      Process.detach(pid)
+      exit(0)
+    end
+    # Child: create new process group but keep stdin/stdout/stderr
+    Process.setsid
   end
 
   # Attempt to stop processes for the given subcommand. Return true if any

@@ -13,7 +13,6 @@ module WormCLI
         output_position: :above,
         output_lines: 3
       }
-      # rubocop:disable Metrics/BlockLength
       begin
         OptionParser.new do |opts|
           opts.banner = 'Usage: prg worm [options]'
@@ -105,10 +104,6 @@ module WormCLI
             options[:daemon_name] = name
           end
 
-          opts.on('--no-detach', 'When used with --daemon/--daemon-as: run background child but do not fully detach from the terminal') do
-            options[:no_detach] = true
-          end
-
           opts.on('--pid-file FILE', 'Write process ID to file (default: /tmp/ruby-progress/progress.pid)') do |file|
             options[:pid_file] = file
           end
@@ -182,7 +177,6 @@ module WormCLI
         puts "Run 'prg worm --help' for more information."
         exit 1
       end
-      # rubocop:enable Metrics/BlockLength
       options
     end
   end

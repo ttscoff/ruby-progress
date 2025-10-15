@@ -2,7 +2,7 @@
 
 require 'pty'
 require 'io/console'
-require 'english'
+require 'English'
 require 'fileutils'
 
 begin
@@ -176,7 +176,12 @@ module RubyProgress
         debug_log("spawned pid=#{pid} cmd=#{@command}")
 
         until reader.eof? || @stop
-          next unless reader.wait_readable(0.1)
+          ready = if reader.respond_to?(:wait_readable)
+                    reader.wait_readable(0.1)
+                  else
+                    IO.select([reader], nil, nil, 0.1)
+                  end
+          next unless ready
 
           chunk = reader.read_nonblock(4096, exception: false)
           next if chunk.nil? || chunk.empty?

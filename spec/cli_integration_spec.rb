@@ -39,17 +39,17 @@ RSpec.describe 'CLI Integration' do
     end
 
     it 'runs with basic text' do
-      stdout, stderr, status = Open3.capture3("echo '' | timeout 1s ruby #{bin_path} ripple 'Test'")
+      stdout, stderr, status = run_with_timeout("echo '' | ruby #{bin_path} ripple 'Test'")
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts speed option' do
-      stdout, stderr, status = Open3.capture3("echo '' | timeout 1s ruby #{bin_path} ripple 'Test' --speed fast")
+      stdout, stderr, status = run_with_timeout("echo '' | ruby #{bin_path} ripple 'Test' --speed fast")
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts style options' do
-      stdout, stderr, status = Open3.capture3("echo '' | timeout 1s ruby #{bin_path} ripple 'Test' --style rainbow")
+      stdout, stderr, status = run_with_timeout("echo '' | ruby #{bin_path} ripple 'Test' --style rainbow")
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
   end
@@ -61,19 +61,19 @@ RSpec.describe 'CLI Integration' do
     end
 
     it 'runs without message (no default text)' do
-      stdout, stderr, status = Open3.capture3("echo '' | timeout 1s ruby #{bin_path} worm")
+      stdout, stderr, status = run_with_timeout("echo '' | ruby #{bin_path} worm")
       expect(status.exitstatus).to eq(124) # timeout exit code
       # Should not contain "Processing" since we fixed that
       expect(stdout).not_to include('Processing')
     end
 
     it 'accepts message option' do
-      stdout, stderr, status = Open3.capture3("echo '' | timeout 1s ruby #{bin_path} worm --message 'Working'")
+      stdout, stderr, status = run_with_timeout("echo '' | ruby #{bin_path} worm --message 'Working'")
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts style options' do
-      stdout, stderr, status = Open3.capture3("echo '' | timeout 1s ruby #{bin_path} worm --style blocks")
+      stdout, stderr, status = run_with_timeout("echo '' | ruby #{bin_path} worm --style blocks")
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
@@ -90,12 +90,12 @@ RSpec.describe 'CLI Integration' do
     end
 
     it 'runs without message (no default text)' do
-      stdout, stderr, status = Open3.capture3("echo '' | timeout 1s ruby #{bin_path} twirl")
+      stdout, stderr, status = run_with_timeout("echo '' | ruby #{bin_path} twirl")
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 
     it 'accepts spinner style options' do
-      stdout, stderr, status = Open3.capture3("echo '' | timeout 1s ruby #{bin_path} twirl --style dots")
+      stdout, stderr, status = run_with_timeout("echo '' | ruby #{bin_path} twirl --style dots")
       expect(status.exitstatus).to eq(124) # timeout exit code
     end
 

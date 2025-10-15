@@ -2,32 +2,56 @@
 
 [![Gem Version](https://badge.fury.io/rb/ruby-progress.svg)](https://badge.fury.io/rb/ruby-progress)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![RSpec Tests](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml/badge.svg)](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml)
+<!-- [![RSpec Tests](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml/badge.svg)](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml) -->
 [![Ruby](https://img.shields.io/badge/ruby-%3E%3D%202.5.0-ruby.svg)](https://www.ruby-lang.org/)
-[![Coverage Status](https://img.shields.io/badge/coverage-55%25-yellow.svg)](#)
+<!-- [![Coverage Status](https://img.shields.io/badge/coverage-31%25-yellow.svg)](#) -->
 
 This repository contains three different Ruby progress indicator projects: **Ripple**, **Worm**, and **Twirl**. All provide animated terminal progress indicators with different visual styles and features.
 
 ## Table of Contents
 
-- [Unified Interface](#unified-interface)
-  - [Submitting jobs to a running daemon](#submitting-jobs-to-a-running-daemon)
-- [Job result schema](#job-result-schema)
-- [Example: start a daemon and send a job (simple)](#example-start-a-daemon-and-send-a-job-simple)
-- [Ripple](#ripple)
-  - [Ripple Features](#ripple-features)
-  - [Ripple Usage](#ripple-usage)
-- [Twirl](#twirl)
-- [Worm](#worm)
-  - [Daemon mode (background indicator)](#daemon-mode-background-indicator)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Universal Utilities](#universal-utilities)
-  - [Terminal Control](#terminal-control)
-  - [Completion Messages](#completion-messages)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
+- [Ruby Progress Indicators](#ruby-progress-indicators)
+  - [Table of Contents](#table-of-contents)
+  - [Unified Interface](#unified-interface)
+    - [Global Options](#global-options)
+    - [Stopping a backgrounded progress indicator](#stopping-a-backgrounded-progress-indicator)
+      - [Job Control Subcommands](#job-control-subcommands)
+  - [Example: background mode demo](#example-background-mode-demo)
+  - [Ripple](#ripple)
+    - [Ripple Features](#ripple-features)
+    - [Ripple Usage](#ripple-usage)
+      - [Ripple CLI examples](#ripple-cli-examples)
+      - [Ripple Command Line Options](#ripple-command-line-options)
+    - [Ripple Library Usage](#ripple-library-usage)
+  - [Twirl](#twirl)
+    - [Twirl Features](#twirl-features)
+    - [Twirl Usage](#twirl-usage)
+      - [Command Line](#command-line)
+      - [Twirl Command Line Options](#twirl-command-line-options)
+    - [Available Spinner Styles](#available-spinner-styles)
+  - [Worm](#worm)
+    - [Worm Features](#worm-features)
+    - [Worm Usage](#worm-usage)
+      - [Command Line](#command-line-1)
+      - [Daemon mode (background indicator)](#daemon-mode-background-indicator)
+      - [Worm Command Line Options](#worm-command-line-options)
+    - [Worm Library Usage](#worm-library-usage)
+    - [Animation Styles](#animation-styles)
+      - [Circles](#circles)
+      - [Blocks](#blocks)
+      - [Geometric](#geometric)
+      - [Custom Styles](#custom-styles)
+      - [Direction Control](#direction-control)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+    - [As a Gem (Recommended)](#as-a-gem-recommended)
+    - [From Source](#from-source)
+    - [Development](#development)
+  - [Universal Utilities](#universal-utilities)
+    - [Terminal Control](#terminal-control)
+    - [Completion Messages](#completion-messages)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Unified Interface
 
@@ -78,114 +102,86 @@ Notes:
 - The indicator clears its line on shutdown and prints the final message to STDOUT.
 - `--stop-pid` is still supported for backward compatibility, but `--stop [--pid-file FILE]` is preferred.
 
-### Submitting jobs to a running daemon
+### Stopping a backgrounded progress indicator
 
-When running a long-lived daemon (for example `prg worm --daemon`), you can submit additional commands to run and have their output displayed without disrupting the animation using the `prg job send` helper.
+When running a backgrounded progress indicator (for example `prg worm --daemon`), you can send control signals using the `prg job` command with subcommands.
 
-Basic usage:
+#### Job Control Subcommands
 
-```bash
-# Enqueue a command to the default daemon PID
-prg job send --command "./deploy-step.sh"
-
-# Enqueue to a named daemon (creates /tmp/ruby-progress/<name>.pid)
-prg job send --daemon-name mytask --command "rsync -av ./dist/ user@host:/srv/app"
-
-# Read command from stdin (useful in scripts)
-echo "bundle exec rake db:migrate" | prg job send --stdin --daemon-name mytask
-
-# Wait for the job result and print the job result JSON (default timeout 10s)
-prg job send --daemon-name mytask --command "./deploy-step.sh" --wait --timeout 30
-```
-
-You can also send control/action jobs (no shell command) to a running daemon. These are JSON payloads with an `action` key handled by the daemon's job processor. The helper supports a few common actions:
+**Stop a running daemon:**
 
 ```bash
-# Send a simple 'advance' action (no value)
-prg job send --daemon-name demo --advance
+# Send a stop signal to the default daemon
+prg job stop
 
-# Send a 'percent' action with a numeric value
-prg job send --daemon-name demo --percent 42
+# Send a stop signal to a named daemon (uses /tmp/ruby-progress/<name>.pid)
+prg job stop --daemon-name mytask
 
-# Example using `fill` as a named daemon and sending percent updates
-```bash
-# Start a named fill worker (non-detaching so animation remains visible)
-prg fill --daemon-as demo --no-detach --output-lines 3 --output-position top
+# Send a stop signal with a completion message
+prg job stop --daemon-name mytask --message "Deployment complete!"
 
-# Send percent updates to the named worker
-prg job send --daemon-name demo --percent 10 --wait
-prg job send --daemon-name demo --percent 50 --wait
-prg job send --daemon-name demo --percent 100 --wait
+# Send a stop signal with a checkmark
+prg job stop --daemon-name mytask --message "Build successful" --checkmark
+
+# Send a stop signal indicating an error
+prg job stop --daemon-name mytask --message "Build failed" --error
 ```
 
-# Or use the generic action/value pair
-prg job send --daemon-name demo --action percent --value 42
-```
-
-Note about stopping named daemons:
-
-You can target named daemons directly using the `--stop-id NAME` shorthand which implies `--stop` and targets the named daemon (it is normalized to the canonical daemon name used for the PID file). This is convenient for scripts and demos. Example:
+**Check daemon status:**
 
 ```bash
-# Stop a named fill worker with a success message
-prg fill --stop-id demo --stop-success 'Demo finished'
+# Check if a daemon is running
+prg job status --daemon-name mytask
+
+# Check status using a PID file
+prg job status --pid-file /tmp/ruby-progress/mytask.pid
 ```
 
-Behavior and file layout:
-
-- Jobs are written as JSON files into the daemon's job directory, which is derived from the daemon PID file. For example, a PID file `/tmp/ruby-progress/mytask.pid` maps to the job directory `/tmp/ruby-progress/mytask.jobs`.
-- The CLI writes the job atomically by first writing a `*.json.tmp` temporary file and then renaming it to `*.json`.
-- The daemon's job processor claims jobs atomically by renaming the job file to `*.processing`, writes a `*.processing.result` JSON file when finished, and moves processed jobs to `processed-*`.
-
-This mechanism allows you to submit many commands to a single running indicator and have their output shown in reserved terminal rows while the animation continues.
-
-## Job result schema
-
-When a job is processed the daemon writes a small JSON result file next to the claimed job with the suffix `.processing.result` containing at least these keys:
-
-- `id` - the job id (string)
-- `status` - `"done"` or `"error"`
-- `time` - epoch seconds when the job finished (integer)
-
-Depending on the job handler, additional keys may be present:
-
-- `exit_status` - the numeric process exit status (integer or nil if unknown)
-- `output` - a string with the last captured lines of output (if available)
-- `error` - an error message when `status` is `error`
-
-Example:
-
-```json
-{
-  "id": "8a1f6c1e-4b7a-4f2c-b0a8-9e9f1c2f1a2b",
-  "status": "done",
-  "time": 1634044800,
-  "exit_status": 0,
-  "output": "Step 1 completed\nStep 2 completed"
-}
-```
-
-This file is intended for short messages and small captured output snippets (the CLI captures the last N lines). If you need larger logs, write them to a persistent file from the command itself and include a reference in the job metadata.
-
-## Example: start a daemon and send a job (simple)
-
-Below is an example script that demonstrates starting a worm daemon, sending a job, waiting for the result, and stopping the daemon.
----
-
-If you want the background worker to continue writing to the same terminal (so you can visually watch the animation while your script continues), use the non-detaching background mode:
+**Advance a progress indicator:**
 
 ```bash
-# Start a named worm worker that backgrounds but does not fully detach
-prg worm --daemon-as demo --no-detach
+# Advance progress by 1 (for indicators that support it)
+prg job advance --daemon-name mytask
 
-# In the same script or a subsequent command, enqueue a job to that worker
-prg job send --daemon-name demo --command "echo hello; sleep 1; echo done" --wait
+# Advance by a specific amount
+prg job advance --daemon-name mytask --amount 10
+```
+
+**Backward Compatibility:**
+
+The legacy `prg job send` command is still supported but deprecated. It functions identically to `prg job stop`:
+
+```bash
+# This still works but shows a deprecation warning
+prg job send --daemon-name mytask --message "Complete!"
+```
+
+Alternatively, you can use the built-in `--stop` flags on the progress commands:
+
+```bash
+# Stop a named daemon with a success message
+prg worm --stop-id demo --stop-success 'Task completed'
+
+# Stop with an error message
+prg worm --stop-id demo --stop-error 'Task failed'
+```
+
+## Example: background mode demo
+
+Below is an example script that demonstrates starting a backgrounded progress indicator, doing work, and stopping it with a message.
+
+```bash
+# Start a named worm worker that runs in the background
+prg worm --daemon-as demo
+
+# Do some work in your script...
+sleep 2
 
 # Stop the worker with a success message
-prg worm --stop-id demo --stop-success "Demo finished"
+prg job stop --daemon-name demo --message "Demo finished" --checkmark
 ```
 
-Note: Non-detaching mode keeps the child process attached to the controlling TTY. That means both the worker and the invoking shell may write to the terminal and outputs can interleave.
+**Note:** Daemon mode automatically backgrounds the process using `Process.fork` and `Process.detach`, so you don't need to append `&`. The process detaches cleanly without shell job notifications.
 
 ## Ripple
 

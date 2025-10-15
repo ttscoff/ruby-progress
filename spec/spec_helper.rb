@@ -53,6 +53,66 @@ at_exit do
 end
 
 require_relative '../lib/ruby-progress'
+require 'timeout'
+require 'open3'
+
+# Helper method for running commands with timeout (cross-platform)
+def run_with_timeout(command, timeout_seconds = 1)
+  stdout = ''
+  stderr = ''
+  exit_status = 124 # Default to timeout exit code
+
+  # Suppress thread error messages during forced termination
+  original_report_on_exception = Thread.report_on_exception
+  Thread.report_on_exception = false
+
+  begin
+    Open3.popen3(command) do |_stdin, out, err, wait_thr|
+      # Set non-blocking mode
+      out.sync = true
+      err.sync = true
+
+      # Wait for timeout with the process
+      Timeout.timeout(timeout_seconds) do
+        wait_thr.join
+        exit_status = wait_thr.value.exitstatus
+        # Process completed before timeout - read output
+        stdout = out.read
+        stderr = err.read
+      end
+    rescue Timeout::Error
+      # Timeout occurred - kill the process
+      begin
+        Process.kill('TERM', wait_thr.pid)
+        # Give it a moment to die gracefully
+        sleep 0.1
+        Process.kill('KILL', wait_thr.pid) if wait_thr.alive?
+      rescue Errno::ESRCH, Errno::EPERM
+        # Process already dead or no permission
+      end
+
+      # Try to read any output that was generated before timeout
+      begin
+        stdout = out.read_nonblock(100_000)
+      rescue IO::WaitReadable, EOFError
+        stdout = ''
+      end
+
+      begin
+        stderr = err.read_nonblock(100_000)
+      rescue IO::WaitReadable, EOFError
+        stderr = ''
+      end
+
+      exit_status = 124 # timeout exit code
+    end
+  ensure
+    Thread.report_on_exception = original_report_on_exception
+  end
+
+  status = double('ProcessStatus', exitstatus: exit_status, success?: exit_status == 0)
+  [stdout, stderr, status]
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
