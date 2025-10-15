@@ -46,6 +46,11 @@ module TwirlRunner
 
       spinner_thread.kill
       RubyProgress::Utils.clear_line
+    rescue Interrupt
+      spinner_thread&.kill
+      RubyProgress::Utils.clear_line
+      RubyProgress::Utils.show_cursor
+      exit 130
     ensure
       RubyProgress::Utils.show_cursor
     end
@@ -74,6 +79,10 @@ module TwirlRunner
     begin
       RubyProgress::Utils.hide_cursor
       loop { spinner.animate }
+    rescue Interrupt
+      RubyProgress::Utils.clear_line
+      RubyProgress::Utils.show_cursor
+      exit 130
     ensure
       RubyProgress::Utils.show_cursor
       if options[:success] || options[:checkmark]

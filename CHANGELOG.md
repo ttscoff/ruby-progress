@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.6] - 2025-10-15
+
+### Fixed
+
+- **Interrupt handling**: Fixed Twirl and Worm CLIs to exit cleanly on Ctrl+C (SIGINT) without displaying backtraces
+  - Added top-level `trap('INT')` handlers to both `twirl_cli.rb` and `worm_cli.rb`
+  - Added `rescue Interrupt` clauses to Twirl runner methods for graceful cleanup
+  - All four progress indicators (Ripple, Worm, Twirl, Fill) now have consistent interrupt handling
+  - Properly clean up (show cursor, clear line) and exit with code 130 on interrupt
+
 ## [1.3.5] - 2025-10-15
 
 ### Added

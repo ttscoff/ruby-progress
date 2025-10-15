@@ -8,6 +8,11 @@ require_relative 'twirl_runner'
 # Twirl CLI (extracted from bin/prg)
 module TwirlCLI
   def self.run
+    trap('INT') do
+      RubyProgress::Utils.show_cursor
+      exit
+    end
+
     options = TwirlCLI::Options.parse_cli_options
 
     if options[:status]
