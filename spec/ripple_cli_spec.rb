@@ -24,7 +24,7 @@ RSpec.describe 'Ripple CLI' do
     it 'shows available styles' do
       stdout, _stderr, status = Open3.capture3("ruby #{bin_path} ripple --show-styles")
       expect(status.exitstatus).to eq(0)
-      expect(stdout).to include('Available ripple styles:')
+      expect(stdout).to include('== ripple styles')
     end
   end
 
@@ -73,21 +73,21 @@ RSpec.describe 'Ripple CLI' do
 
   describe 'command execution' do
     it 'executes commands successfully' do
-      stdout, _stderr, status = Open3.capture3("ruby #{bin_path} ripple 'Test' --command 'echo success'")
+      stdout, _stderr, status = Open3.capture3("ruby #{bin_path} ripple 'Test' --command 'echo success' --stdout")
       expect(status.exitstatus).to eq(0)
       expect(stdout).to include('success')
     end
 
     it 'handles command failures' do
-      stdout, _stderr, status = Open3.capture3("ruby #{bin_path} ripple 'Test' --command 'exit 1' --error 'Failed'")
+      stdout, stderr, status = Open3.capture3("ruby #{bin_path} ripple 'Test' --command 'exit 1' --success 'OK' --error 'Failed' --stdout")
       expect(status.exitstatus).to eq(1)
-      expect(stdout).to include('Failed')
+      expect(stderr).to include('Failed')
     end
 
     it 'shows checkmarks' do
-      stdout, _stderr, status = Open3.capture3("ruby #{bin_path} ripple 'Test' --command 'echo ok' --checkmark")
+      stdout, stderr, status = Open3.capture3("ruby #{bin_path} ripple 'Test' --command 'echo ok' --checkmark --stdout")
       expect(status.exitstatus).to eq(0)
-      expect(stdout).to match(/✅|success/)
+      expect(stderr).to match(/✅/)
     end
 
     it 'outputs to stdout when requested' do
@@ -114,18 +114,18 @@ RSpec.describe 'Ripple CLI' do
   describe 'advanced features' do
     it 'combines multiple options' do
       stdout, _stderr, status = Open3.capture3(
-        "ruby #{bin_path} ripple 'Combined' --command 'echo test' --style rainbow --speed fast --checkmark"
+        "ruby #{bin_path} ripple 'Combined' --command 'echo test' --style rainbow --speed fast --checkmark --stdout"
       )
       expect(status.exitstatus).to eq(0)
       expect(stdout).to include('test')
     end
 
     it 'works with custom icons' do
-      stdout, _stderr, status = Open3.capture3(
-        "ruby #{bin_path} ripple 'Test' --command 'echo x' --success-icon '🎉' --success 'Yay'"
+      stdout, stderr, status = Open3.capture3(
+        "ruby #{bin_path} ripple 'Test' --command 'echo x' --success-icon '🎉' --success 'Yay' --stdout"
       )
       expect(status.exitstatus).to eq(0)
-      expect(stdout).to include('🎉')
+      expect(stderr).to include('🎉')
     end
   end
 end

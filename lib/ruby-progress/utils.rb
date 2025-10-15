@@ -41,12 +41,17 @@ module RubyProgress
     def self.display_completion(message, success: true, show_checkmark: false, output_stream: :warn, icons: {})
       return unless message
 
-      mark = if show_checkmark
-               icon = success ? (icons[:success] || '✅') : (icons[:error] || '🛑')
-               "#{icon} "
-             else
-               ''
-             end
+      # Determine the mark to show. If checkmarks are enabled, prefer the
+      # default icons but allow overrides via icons hash. If checkmarks are not
+      # enabled, still show a custom icon when provided via CLI options.
+      mark = ''
+      if show_checkmark
+        icon = success ? (icons[:success] || '✅') : (icons[:error] || '🛑')
+        mark = "#{icon} "
+      else
+        custom_icon = success ? icons[:success] : icons[:error]
+        mark = custom_icon ? "#{custom_icon} " : ''
+      end
 
       formatted_message = "#{mark}#{message}"
 

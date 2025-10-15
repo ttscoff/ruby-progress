@@ -2,31 +2,56 @@
 
 [![Gem Version](https://badge.fury.io/rb/ruby-progress.svg)](https://badge.fury.io/rb/ruby-progress)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![RSpec Tests](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml/badge.svg)](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml)
+<!-- [![RSpec Tests](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml/badge.svg)](https://github.com/ttscoff/ruby-progress/actions/workflows/rspec.yml) -->
 [![Ruby](https://img.shields.io/badge/ruby-%3E%3D%202.5.0-ruby.svg)](https://www.ruby-lang.org/)
-[![Coverage Status](https://img.shields.io/badge/coverage-55%25-yellow.svg)](#)
+<!-- [![Coverage Status](https://img.shields.io/badge/coverage-31%25-yellow.svg)](#) -->
 
 This repository contains three different Ruby progress indicator projects: **Ripple**, **Worm**, and **Twirl**. All provide animated terminal progress indicators with different visual styles and features.
 
 ## Table of Contents
 
-- [Unified Interface](#unified-interface)
-  - [Stopping a backgrounded progress indicator](#stopping-a-backgrounded-progress-indicator)
+- [Ruby Progress Indicators](#ruby-progress-indicators)
+  - [Table of Contents](#table-of-contents)
+  - [Unified Interface](#unified-interface)
+    - [Global Options](#global-options)
+    - [Stopping a backgrounded progress indicator](#stopping-a-backgrounded-progress-indicator)
+      - [Job Control Subcommands](#job-control-subcommands)
   - [Example: background mode demo](#example-background-mode-demo)
-- [Ripple](#ripple)
-  - [Ripple Features](#ripple-features)
-  - [Ripple Usage](#ripple-usage)
-- [Twirl](#twirl)
-- [Worm](#worm)
-  - [Daemon mode (background indicator)](#daemon-mode-background-indicator)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Universal Utilities](#universal-utilities)
-  - [Terminal Control](#terminal-control)
-  - [Completion Messages](#completion-messages)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
+  - [Ripple](#ripple)
+    - [Ripple Features](#ripple-features)
+    - [Ripple Usage](#ripple-usage)
+      - [Ripple CLI examples](#ripple-cli-examples)
+      - [Ripple Command Line Options](#ripple-command-line-options)
+    - [Ripple Library Usage](#ripple-library-usage)
+  - [Twirl](#twirl)
+    - [Twirl Features](#twirl-features)
+    - [Twirl Usage](#twirl-usage)
+      - [Command Line](#command-line)
+      - [Twirl Command Line Options](#twirl-command-line-options)
+    - [Available Spinner Styles](#available-spinner-styles)
+  - [Worm](#worm)
+    - [Worm Features](#worm-features)
+    - [Worm Usage](#worm-usage)
+      - [Command Line](#command-line-1)
+      - [Daemon mode (background indicator)](#daemon-mode-background-indicator)
+      - [Worm Command Line Options](#worm-command-line-options)
+    - [Worm Library Usage](#worm-library-usage)
+    - [Animation Styles](#animation-styles)
+      - [Circles](#circles)
+      - [Blocks](#blocks)
+      - [Geometric](#geometric)
+      - [Custom Styles](#custom-styles)
+      - [Direction Control](#direction-control)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+    - [As a Gem (Recommended)](#as-a-gem-recommended)
+    - [From Source](#from-source)
+    - [Development](#development)
+  - [Universal Utilities](#universal-utilities)
+    - [Terminal Control](#terminal-control)
+    - [Completion Messages](#completion-messages)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Unified Interface
 
@@ -79,25 +104,56 @@ Notes:
 
 ### Stopping a backgrounded progress indicator
 
-When running a backgrounded progress indicator (for example `prg worm --daemon`), you can send a stop signal with an optional completion message using the `prg job send` helper.
+When running a backgrounded progress indicator (for example `prg worm --daemon`), you can send control signals using the `prg job` command with subcommands.
 
-Basic usage:
+#### Job Control Subcommands
+
+**Stop a running daemon:**
 
 ```bash
 # Send a stop signal to the default daemon
-prg job send
+prg job stop
 
 # Send a stop signal to a named daemon (uses /tmp/ruby-progress/<name>.pid)
-prg job send --daemon-name mytask
+prg job stop --daemon-name mytask
 
 # Send a stop signal with a completion message
-prg job send --daemon-name mytask --message "Deployment complete!"
+prg job stop --daemon-name mytask --message "Deployment complete!"
 
 # Send a stop signal with a checkmark
-prg job send --daemon-name mytask --message "Build successful" --checkmark
+prg job stop --daemon-name mytask --message "Build successful" --checkmark
 
 # Send a stop signal indicating an error
-prg job send --daemon-name mytask --message "Build failed" --error
+prg job stop --daemon-name mytask --message "Build failed" --error
+```
+
+**Check daemon status:**
+
+```bash
+# Check if a daemon is running
+prg job status --daemon-name mytask
+
+# Check status using a PID file
+prg job status --pid-file /tmp/ruby-progress/mytask.pid
+```
+
+**Advance a progress indicator:**
+
+```bash
+# Advance progress by 1 (for indicators that support it)
+prg job advance --daemon-name mytask
+
+# Advance by a specific amount
+prg job advance --daemon-name mytask --amount 10
+```
+
+**Backward Compatibility:**
+
+The legacy `prg job send` command is still supported but deprecated. It functions identically to `prg job stop`:
+
+```bash
+# This still works but shows a deprecation warning
+prg job send --daemon-name mytask --message "Complete!"
 ```
 
 Alternatively, you can use the built-in `--stop` flags on the progress commands:
@@ -115,19 +171,17 @@ prg worm --stop-id demo --stop-error 'Task failed'
 Below is an example script that demonstrates starting a backgrounded progress indicator, doing work, and stopping it with a message.
 
 ```bash
-# Start a named worm worker that backgrounds but does not fully detach (for demos)
-prg worm --daemon-as demo --no-detach
+# Start a named worm worker that runs in the background
+prg worm --daemon-as demo
 
 # Do some work in your script...
 sleep 2
 
 # Stop the worker with a success message
-prg job send --daemon-name demo --message "Demo finished" --checkmark
+prg job stop --daemon-name demo --message "Demo finished" --checkmark
 ```
 
-```
-
-Note: Non-detaching mode keeps the child process attached to the controlling TTY. That means both the worker and the invoking shell may write to the terminal and outputs can interleave.
+**Note:** Daemon mode automatically backgrounds the process using `Process.fork` and `Process.detach`, so you don't need to append `&`. The process detaches cleanly without shell job notifications.
 
 ## Ripple
 

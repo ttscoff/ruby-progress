@@ -16,7 +16,7 @@ We've simplified daemon mode to ALWAYS use backgrounding (not detaching). This m
 # Start a twirl spinner in the background
 ./bin/prg twirl --daemon-as my_task
 
-# Start a ripple animation in the background  
+# Start a ripple animation in the background
 ./bin/prg ripple --daemon-as my_task
 
 # Start a worm animation in the background
@@ -26,7 +26,7 @@ We've simplified daemon mode to ALWAYS use backgrounding (not detaching). This m
 ./bin/prg fill --daemon-as my_task --total 100
 ```
 
-The indicator will appear in your terminal and remain visible while you 
+The indicator will appear in your terminal and remain visible while you
 continue working.
 
 ### Stopping a background indicator
@@ -73,7 +73,7 @@ ps aux | grep "prg twirl"
 
 ### Using in shell scripts
 
-Daemons are designed to work cleanly in shell scripts with no extraneous 
+Daemons are designed to work cleanly in shell scripts with no extraneous
 output:
 
 ```bash
@@ -89,37 +89,37 @@ make build
 prg job stop --daemon-name build --message "Build complete!" --checkmark
 ```
 
-The daemon will background silently with no shell job notifications, making 
+The daemon will background silently with no shell job notifications, making
 it perfect for scripts and automation.
 
 ## Technical Details
 
-- **`PrgCLI.backgroundize`**: Forks the process; parent detaches child and 
-  exits (returning control to shell), child creates new process group with 
-  `Process.setsid` but keeps stdin/stdout/stderr so output remains visible 
+- **`PrgCLI.backgroundize`**: Forks the process; parent detaches child and
+  exits (returning control to shell), child creates new process group with
+  `Process.setsid` but keeps stdin/stdout/stderr so output remains visible
   on the TTY. The use of `Process.detach` prevents shell job notifications.
 - **PID files**: Stored in `/tmp/ruby-progress/DAEMON_NAME.pid`
-- **Signal handling**: Daemons listen for INT, USR1, TERM, and HUP signals 
+- **Signal handling**: Daemons listen for INT, USR1, TERM, and HUP signals
   to gracefully stop; USR2 for control messages (advance, etc.)
-- **Control messages**: `job` subcommands use signal + message file to pass 
+- **Control messages**: `job` subcommands use signal + message file to pass
   messages to the daemon
-- **Shell scripting**: No shell job completion messages are emitted, making 
+- **Shell scripting**: No shell job completion messages are emitted, making
   daemons suitable for use in scripts
 
 ## Job Subcommands
 
 The `prg job` command provides control over running progress indicators:
 
-- **`stop`**: Gracefully stop a running indicator with optional message, 
+- **`stop`**: Gracefully stop a running indicator with optional message,
   checkmark, or error state
-- **`advance`**: Increment a fill progress bar (sends data via control 
+- **`advance`**: Increment a fill progress bar (sends data via control
   message file)
 - **`status`**: Check if a daemon is running and show its PID
 
 ### Backward Compatibility
 
-The old `prg job send` command still works but is deprecated. It now 
-maps to `prg job stop` and displays a deprecation warning. Update your 
+The old `prg job send` command still works but is deprecated. It now
+maps to `prg job stop` and displays a deprecation warning. Update your
 scripts to use `prg job stop` instead.
 
 ## Fixed Bug

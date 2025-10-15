@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2025-10-15
+
+### Added
+
+- **Job CLI refactoring**: Restructured `prg job` command to use proper subcommands instead of hardcoded send behavior
+  - `prg job stop` - Stop a running progress indicator (replaces `prg job send`)
+  - `prg job status` - Check if a daemon is running and show its PID
+  - `prg job advance` - Advance a fill progress bar by a specified amount
+- Backward compatibility: `prg job send` still works but shows deprecation warning
+- Silent operation for job commands - no confirmation messages, only daemon output shown
+- Control message framework using JSON files and USR2 signal for daemon communication
+- Comprehensive test coverage improvements (from 10.63% to 31.38%)
+  - 119 new tests across 8 new spec files
+  - Unit tests for CLI options modules (twirl, ripple, fill, worm)
+  - Job CLI subcommand tests
+  - Custom icon propagation tests
+
+### Changed
+
+- **Daemon mode improvements**: All CLI subcommands now consistently use `PrgCLI.backgroundize`
+- Removed `--no-detach` option from all CLIs (backgrounding is now always used)
+- Fixed `backgroundize` method to use `Process.detach()` preventing shell job notifications
+- Ripple completion messages now go to stderr (animation output stream) instead of stdout
+- Enhanced `Utils.display_completion` to show custom icons even without checkmark flag
+- Updated README with new job CLI subcommand documentation
+- Updated documentation (DAEMON_MODE.md, JOB_CLI_REFACTOR.md)
+
+### Fixed
+
+- Ripple CLI tests updated to check stderr for completion messages (not stdout)
+- Ripple CLI tests updated to require `--stdout` flag to see command output
+- Output capture compatibility for older Ruby versions (added `wait_readable` fallback)
+- Fixed daemon PID file cleanup and signal handling
+- Custom success/error icons now display correctly with `--success-icon` and `--error-icon` flags
+
+### Removed
+
+- `--no-detach` option from all progress indicator CLIs (ripple, worm, twirl, fill)
+- Confirmation output from job control commands for script-friendly silent operation
+
 ## Unreleased
 
 ### Changed

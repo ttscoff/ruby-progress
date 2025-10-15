@@ -42,7 +42,7 @@ prg job advance --daemon-name mybar --amount 10
 - **Backward compatibility**: `prg job send` still works but shows deprecation warning
 - **Control messages**: Uses JSON files (`.pid.msg`) to pass data to daemons
 - **Signal handling**: USR2 for control messages, USR1/INT/TERM/HUP for stop
-- **Silent operation**: No confirmation messages for script-friendly usage - 
+- **Silent operation**: No confirmation messages for script-friendly usage -
   only daemon output is shown
 
 ## Files Modified
