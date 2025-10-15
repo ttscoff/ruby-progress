@@ -15,6 +15,11 @@ module WormCLI
   end
 
   def self.run
+    trap('INT') do
+      RubyProgress::Utils.show_cursor
+      exit
+    end
+
     options = WormCLI::Options.parse_cli_options
 
     if options[:status]
