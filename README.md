@@ -28,7 +28,7 @@ This repository contains a collection of Ruby progress indicator projects: **Rip
     - [Twirl Usage](#twirl-usage)
       - [Command Line](#command-line)
       - [Twirl Command Line Options](#twirl-command-line-options)
-    - [Piped STDIN (no --command)](#piped-stdin-no--command)
+    - [Piped STDIN (no --command)](#piped-stdin-no---command)
     - [Available Spinner Styles](#available-spinner-styles)
   - [Worm](#worm)
     - [Worm Features](#worm-features)
@@ -230,7 +230,7 @@ prg ripple "Installing packages" --command "sleep 5" --success "Installation com
 | `-c, --command COMMAND` | Command to run (optional - runs indefinitely without command)   |
 | `--success TEXT`        | Text to display on successful completion                        |
 | `--error TEXT`          | Text to display on error                                        |
-| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)                  |
+| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)               |
 | `--stdout`              | Output captured command result to STDOUT                        |
 
 ### Ripple Library Usage
@@ -312,7 +312,7 @@ prg twirl --stop-id mytask --stop-success "Task finished!"
 | `-c, --command COMMAND` | Command to run (optional - runs indefinitely without command) |
 | `--success TEXT`        | Text to display on successful completion                      |
 | `--error TEXT`          | Text to display on error                                      |
-| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)                |
+| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)             |
 | `--stdout`              | Output captured command result to STDOUT                      |
 | `--stdout-live`         | Stream piped input lines immediately to STDOUT                |
 | `--daemon`              | Run in background daemon mode                                 |
@@ -340,6 +340,7 @@ rake generate | prg twirl --stdout
 ```
 
 Notes:
+
 - Live streaming clears the animation line before each print to avoid prefix artifacts.
 - Without `--stdout`, no piped content is printed; the indicator still animates until EOF.
 
@@ -463,9 +464,9 @@ Note: You don’t need `&` when starting the daemon. The command detaches itself
 | `-c, --command COMMAND` | Command to run (optional)                                  |
 | `--success TEXT`        | Text to display on successful completion                   |
 | `--error TEXT`          | Text to display on error                                   |
-| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)             |
+| `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)          |
 | `--stdout`              | Output captured command result to STDOUT                   |
-| `--stdout-live`         | Stream piped input lines immediately to STDOUT                |
+| `--stdout-live`         | Stream piped input lines immediately to STDOUT             |
 | `--daemon`              | Run in background daemon mode                              |
 | `--daemon-as NAME`      | Run in daemon mode with custom name                        |
 | `--stop`                | Stop a running daemon                                      |
