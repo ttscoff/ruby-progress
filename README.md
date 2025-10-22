@@ -28,6 +28,7 @@ This repository contains a collection of Ruby progress indicator projects: **Rip
     - [Twirl Usage](#twirl-usage)
       - [Command Line](#command-line)
       - [Twirl Command Line Options](#twirl-command-line-options)
+    - [Piped STDIN (no --command)](#piped-stdin-no--command)
     - [Available Spinner Styles](#available-spinner-styles)
   - [Worm](#worm)
     - [Worm Features](#worm-features)
@@ -313,12 +314,34 @@ prg twirl --stop-id mytask --stop-success "Task finished!"
 | `--error TEXT`          | Text to display on error                                      |
 | `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)                |
 | `--stdout`              | Output captured command result to STDOUT                      |
+| `--stdout-live`         | Stream piped input lines immediately to STDOUT                |
 | `--daemon`              | Run in background daemon mode                                 |
 | `--daemon-as NAME`      | Run in daemon mode with custom name                           |
 | `--stop`                | Stop a running daemon                                         |
 | `--stop-id NAME`        | Stop daemon by name (implies --stop)                          |
 | `--status`              | Check daemon status                                           |
 | `--status-id NAME`      | Check daemon status by name                                   |
+
+### Piped STDIN (no --command)
+
+All subcommands can animate while reading from STDIN when no `-c/--command` is provided. Output is printed only when `--stdout` is set. With `--stdout-live`, each incoming line is streamed immediately; otherwise lines are buffered and printed upon EOF.
+
+Examples:
+
+```bash
+# Stream lines as they arrive (live); animation line is cleared before each print
+rake generate | prg twirl --stdout --stdout-live
+rake generate | prg ripple --stdout --stdout-live
+rake generate | prg worm   --stdout --stdout-live
+rake generate | prg fill   --stdout --stdout-live
+
+# Buffer and print at the end (no interleaving during animation)
+rake generate | prg twirl --stdout
+```
+
+Notes:
+- Live streaming clears the animation line before each print to avoid prefix artifacts.
+- Without `--stdout`, no piped content is printed; the indicator still animates until EOF.
 
 ### Available Spinner Styles
 
@@ -384,8 +407,11 @@ prg worm --message "Bracketed" --ends "[]" --style circles
 prg worm --message "Parentheses" --ends "()" --style blocks --direction forward
 prg worm --message "Emoji ends" --ends "🎯🎪" --style "custom=🟦🟨🟥"
 
-### Capture and display command output
+### Capture and display command output or piped input
 prg worm --command "git status" --message "Checking status" --stdout
+
+# With piped input (no --command)
+git log --oneline | prg worm --stdout --stdout-live
 
 You can reserve terminal rows for captured command output so the animation doesn't interleave with the script output. Use:
 
@@ -439,6 +465,7 @@ Note: You don’t need `&` when starting the daemon. The command detaches itself
 | `--error TEXT`          | Text to display on error                                   |
 | `--checkmark`           | Show checkmarks (✅ for success, 🛑 for failure)             |
 | `--stdout`              | Output captured command result to STDOUT                   |
+| `--stdout-live`         | Stream piped input lines immediately to STDOUT                |
 | `--daemon`              | Run in background daemon mode                              |
 | `--daemon-as NAME`      | Run in daemon mode with custom name                        |
 | `--stop`                | Stop a running daemon                                      |

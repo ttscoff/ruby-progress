@@ -1,4 +1,24 @@
-# Ruby Progress Indicators
+---
+layout: page
+title: "ruby-progress"
+icon: /images/projecticons/ruby-progress.png
+info: "A collection of CLI progress indicators, written in Ruby but designed for shell scripting."
+ranking: 4
+updated: 2025-10-22
+tags:
+- cli
+- unix
+- ruby
+- scripting
+status: active
+project_tag: rubyprogress
+---
+* [Support](http://github.com/ttscoff/ruby-progress/issues/)
+* [ruby-progress on Github](http://github.com/ttscoff/ruby-progress/)
+{:.linkblock}
+
+* Table of contents
+{:toc}
 
 [![Gem Version](https://badge.fury.io/rb/ruby-progress.svg)](https://badge.fury.io/rb/ruby-progress)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -33,7 +53,18 @@ indicators through subcommands. Run commands with progress animation:
 
 {% iterm "prg twirl --command 'npm install' --message 'Installing packages' --style arc" %}
 
-[See the README for more CLI examples](https://github.com/ttscoff/ruby-progress/blob/main/README.md#ripple-cli-examples)
+[See the README for more CLI examples](https://github.com/ttscoff/ruby-progress/blob/main/README.md#unified-interface)
+
+## Piped STDIN (no --command)
+
+All subcommands can animate while reading from STDIN when no `-c/--command` is provided. Output is printed only when `--stdout` is set. With `--stdout-live`, each incoming line is streamed immediately; otherwise lines are buffered and printed upon EOF. The animation line is cleared before live prints to avoid prefix artifacts.
+
+Examples:
+
+{% iterm "rake generate | prg twirl --stdout --stdout-live" %}
+{% iterm "git log --oneline | prg ripple --stdout --stdout-live" %}
+{% iterm "seq 1 10 | prg worm --stdout --stdout-live" %}
+{% iterm "make | prg fill --stdout --stdout-live" %}
 
 ## Ripple
 
@@ -133,6 +164,12 @@ Stop it later with a message:
 
 [See the README for more background mode examples](https://github.com/ttscoff/ruby-progress/blob/main/README.md#example-background-mode-demo)
 
+## Library Usage
+
+The entire `ruby-progress` gem can be installed in your Gemfile and used as a library. This offers the ability to run a sequence of commands as a block passed to an indicator and offers elegant control of the indicators.
+
+[See the README for library usage examples](https://github.com/ttscoff/ruby-progress/blob/main/README.md#worm-library-usage)
+
 ## Installation
 
 As a gem (recommended):
@@ -141,15 +178,13 @@ As a gem (recommended):
 
 From source:
 
-{% iterm "git clone https://github.com/ttscoff/ruby-progress.git" %}
-
-{% iterm "cd ruby-progress" %}
-
-{% iterm "bundle install" %}
-
-{% iterm "bundle exec rake build" %}
-
-{% iterm "gem install pkg/ruby-progress-*.gem" %}
+```bash
+git clone https://github.com/ttscoff/ruby-progress.git
+cd ruby-progress
+bundle install
+bundle exec rake build
+gem install pkg/ruby-progress-*.gem
+```
 
 [See the README for more installation options](https://github.com/ttscoff/ruby-progress/blob/main/README.md#installation)
 
@@ -160,3 +195,9 @@ From source:
 - ANSI color support (for Ripple rainbow effects)
 
 [See the README for complete documentation](https://github.com/ttscoff/ruby-progress/blob/main/README.md)
+
+{% donate %}
+
+* [Support](http://github.com/ttscoff/ruby-progress/issues/)
+* [ruby-progress on Github](http://github.com/ttscoff/ruby-progress/)
+{:.linkblock}
