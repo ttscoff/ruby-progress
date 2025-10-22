@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.8] - 2025-10-22
+
+### Added
+
+- Piped STDIN support for all indicators when no `-c/--command` is provided:
+  - `prg twirl|ripple|worm|fill` will animate while reading from STDIN.
+  - Output is printed only when `--stdout` is specified.
+  - With `--stdout-live`, lines are streamed as they arrive; otherwise they are buffered and printed on EOF.
+
+### Fixed
+
+- Clear the animation line before writing live piped output to STDOUT, preventing spinner characters from prefixing lines.
+  - Applies to `twirl`, `ripple`, `worm`, and `fill` pipeline modes.
+
 ## [1.3.7] - 2025-10-22
 
 ### Fixed

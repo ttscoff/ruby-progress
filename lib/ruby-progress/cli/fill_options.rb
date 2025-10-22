@@ -65,6 +65,10 @@ module RubyProgress
               options[:output_lines] = n
             end
 
+            opts.on('--stdout', 'Output captured or piped result to STDOUT') do
+              options[:stdout] = true
+            end
+
             opts.on('--stdout-live', 'Stream captured output to STDOUT as it arrives (non-blocking)') do
               options[:stdout_live] = true
             end

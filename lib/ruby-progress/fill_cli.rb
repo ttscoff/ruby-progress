@@ -219,6 +219,46 @@ module RubyProgress
 
         oc = nil
         begin
+          # Pipeline mode: if STDIN is piped and no command provided, animate while
+          # consuming input, printing only with --stdout and respecting --stdout-live.
+          if !$stdin.tty? && !options[:command] && !options[:percent] && !options[:advance] && !options[:complete]
+            fill_bar.render
+            anim_thread = Thread.new do
+              sleep_time = case options[:speed]
+                           when :fast then 0.1
+                           when :medium, nil then 0.2
+                           when :slow then 0.5
+                           when Numeric then 1.0 / options[:speed]
+                           else 0.3
+                           end
+              loop do
+                sleep(sleep_time)
+                fill_bar.render
+              end
+            end
+
+            buffer = []
+            $stdin.each_line do |line|
+              if options[:stdout] && options[:stdout_live]
+                $stderr.print "\r\e[2K"
+                $stderr.flush
+                $stdout.print(line)
+                $stdout.flush
+              elsif options[:stdout]
+                buffer << line
+              end
+            end
+
+            anim_thread.kill
+            RubyProgress::Utils.clear_line
+
+            if options[:stdout] && !options[:stdout_live]
+              $stdout.print(buffer.join)
+              $stdout.flush
+            end
+            return
+          end
+
           if options[:percent]
             # Set to specific percentage
             fill_bar.percent = options[:percent]

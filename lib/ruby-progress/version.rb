@@ -4,7 +4,7 @@ module RubyProgress
   # Main gem version
   # Main gem version
   # @return [String]
-  VERSION = '1.3.7'
+  VERSION = '1.3.8'
 
   # Component-specific versions (patch bumps)
   # Component-specific versions (patch bumps)

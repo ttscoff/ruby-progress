@@ -49,7 +49,41 @@ module RippleCLI
       text = 'Processing' if text.nil? || text.empty?
       run_daemon_mode(text, options)
     else
-      # Non-daemon path requires text
+      # Pipeline mode: when no command and STDIN is piped, animate while consuming
+      # input and optionally mirror to STDOUT based on flags
+      if !$stdin.tty? && !options[:command]
+        text = options[:message] || ARGV.join(' ')
+        rippler = RubyProgress::Ripple.new(text, options)
+        begin
+          RubyProgress::Utils.hide_cursor
+          thread = Thread.new { loop { rippler.advance } }
+
+          buffer = []
+          $stdin.each_line do |line|
+            if options[:output] == :stdout && options[:stdout_live]
+              $stderr.print "\r\e[2K"
+              $stderr.flush
+              $stdout.print(line)
+              $stdout.flush
+            elsif options[:output] == :stdout
+              buffer << line
+            end
+          end
+
+          thread.kill
+          RubyProgress::Utils.clear_line
+
+          if options[:output] == :stdout && !options[:stdout_live]
+            $stdout.print(buffer.join)
+            $stdout.flush
+          end
+        ensure
+          RubyProgress::Utils.show_cursor
+        end
+        exit 0
+      end
+
+      # Non-daemon text mode
       text = options[:message] || ARGV.join(' ')
       if text.empty?
         puts 'Error: Please provide text to animate via argument or --message flag'

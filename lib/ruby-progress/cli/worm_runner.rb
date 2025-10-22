@@ -104,6 +104,48 @@ module WormRunner
   end
 
   def run_indefinitely
+    # Pipeline mode: when no command provided and STDIN is piped, animate while
+    # consuming input, with output only if --stdout was set. Respect --stdout-live.
+    if @command.nil? && !$stdin.tty?
+      original_int_handler = Signal.trap('INT') do
+        @running = false
+        RubyProgress::Utils.clear_line
+        RubyProgress::Utils.show_cursor
+        exit 130
+      end
+
+      @running = true
+      RubyProgress::Utils.hide_cursor
+
+      begin
+        animation_thread = Thread.new { animation_loop }
+        buffer = []
+        $stdin.each_line do |line|
+          if @output_stdout && @output_live
+            $stderr.print "\r\e[2K"
+            $stderr.flush
+            $stdout.print(line)
+            $stdout.flush
+          elsif @output_stdout
+            buffer << line
+          end
+        end
+
+        @running = false
+        animation_thread.join
+        $stderr.print "\r\e[2K"
+
+        if @output_stdout && !@output_live
+          $stdout.print(buffer.join)
+          $stdout.flush
+        end
+      ensure
+        RubyProgress::Utils.show_cursor
+        Signal.trap('INT', original_int_handler) if original_int_handler
+      end
+      return
+    end
+
     original_int_handler = Signal.trap('INT') do
       @running = false
       RubyProgress::Utils.clear_line

@@ -29,12 +29,12 @@ module TwirlRunner
       RubyProgress::Utils.hide_cursor
       spinner_thread = Thread.new { loop { spinner.animate } }
 
-      if $stdout.tty? && (options[:stdout] || options[:stdout_live])
+      if $stdout.tty? && options[:stdout] && options[:stdout_live]
         oc = RubyProgress::OutputCapture.new(
           command: options[:command],
           lines: options[:output_lines] || 3,
           position: options[:output_position] || :above,
-          stream: options[:stdout] || options[:stdout_live]
+          stream: true
         )
         oc.start
 
@@ -85,6 +85,51 @@ module TwirlRunner
   def self.run_indefinitely(options)
     message = options[:message]
     spinner = TwirlSpinner.new(message, options)
+
+    # Pipeline mode: if no command provided and STDIN is not a TTY, consume
+    # input until EOF while animating the spinner, then exit.
+    unless $stdin.tty?
+      buffer = []
+      begin
+        RubyProgress::Utils.hide_cursor
+        spinner_thread = Thread.new { loop { spinner.animate } }
+
+        $stdin.each_line do |line|
+          if options[:stdout] && options[:stdout_live]
+            $stderr.print "\r\e[2K" # clear spinner line before printing live output
+            $stderr.flush
+            $stdout.print(line)
+            $stdout.flush
+          elsif options[:stdout]
+            buffer << line
+          end
+        end
+
+        spinner_thread.kill
+        RubyProgress::Utils.clear_line
+
+        if options[:stdout] && !options[:stdout_live]
+          $stdout.print(buffer.join)
+          $stdout.flush
+        end
+      rescue Interrupt
+        # Propagate interrupt semantics consistent with other modes
+        RubyProgress::Utils.clear_line
+        RubyProgress::Utils.show_cursor
+        exit 130
+      ensure
+        RubyProgress::Utils.show_cursor
+        if options[:success] || options[:checkmark]
+          RubyProgress::Utils.display_completion(
+            options[:success] || 'Complete',
+            success: true,
+            show_checkmark: options[:checkmark],
+            icons: { success: options[:success_icon], error: options[:error_icon] }
+          )
+        end
+      end
+      return
+    end
 
     begin
       RubyProgress::Utils.hide_cursor
