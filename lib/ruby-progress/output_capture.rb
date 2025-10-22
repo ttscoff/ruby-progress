@@ -13,11 +13,64 @@ rescue LoadError
 end
 
 module RubyProgress
+  # Shell execution helpers for spawning commands within a PTY
+  module ShellExec
+    module_function
+
+    # Build argv for invoking the user's shell with a command string.
+    # Uses login shells so aliases/functions and environment are available.
+    #
+    # @param shell [String] path to shell executable
+    # @param command [String] command to execute
+    # @return [Array<String>] argv (excluding the shell path for convenience)
+    def build_shell_argv(shell, command)
+      shell_name = File.basename(shell)
+      case shell_name
+      when 'fish'
+        ['-l', '-c', command]
+      else
+        ['-lc', command]
+      end
+    end
+  end
+
+  # Output helpers for reserving terminal space
+  module OutputUI
+    module_function
+
+    def reserve_space(io, position, lines)
+      return unless io.tty?
+
+      if position == :above
+        io.print "\e[#{lines}L"
+      else
+        io.print("\n" * lines)
+        io.print "\e[#{lines}A"
+      end
+
+      io.flush
+    end
+  end
+
   # PTY-based live output capture that reserves a small terminal area
   # for printing captured output while the animation draws elsewhere.
   class OutputCapture
     attr_reader :exit_status
 
+    # Create a new OutputCapture instance.
+    #
+    # @param command [String] the shell command to spawn and capture via PTY
+    # @param lines [Integer] number of reserved lines to keep for captured output (minimum 1)
+    # @param position [Symbol,String] :above/:below (or :top/:bottom) to place the reserved area
+    # @param log_path [String,nil] optional path to append raw captured output
+    # @param stream [Boolean] when true, redraw captured output live into the terminal area
+    # @param debug [Boolean,nil] enable debug logging when true; nil will consult ENV['RUBY_PROGRESS_DEBUG']
+    # @return [OutputCapture]
+    # @example
+    #   oc = RubyProgress::OutputCapture.new(command: 'bundle exec rspec', lines: 4, position: :below)
+    #   oc.start
+    #   oc.wait
+    #   oc.flush_to($stdout)
     def initialize(command:, lines: 3, position: :above, log_path: nil, stream: false, debug: nil)
       @command = command
       # Coerce lines into a positive Integer
@@ -63,30 +116,49 @@ module RubyProgress
     end
 
     # Start capturing the child process. Returns self.
+    #
+    # This spawns the configured command in a PTY and begins a background
+    # reader thread which buffers the most recent lines. When +stream+ is true
+    # the captured lines are redrawn into the terminal area reserved by
+    # {#reserve_space}.
     def start
-      reserve_space($stderr) if @stream
+      OutputUI.reserve_space($stderr, @position, @lines) if @stream
       @reader_thread = Thread.new { spawn_and_read }
       self
     end
 
+    # Signal the reader thread to stop and wait for it to finish.
+    # @return [void]
     def stop
       @stop = true
       @reader_thread&.join
     end
 
+    # Wait for the background reader thread to finish and return control to
+    # the caller. This is a simple join wrapper used by callers that need to
+    # block until the captured command completes.
+    #
+    # @return [Thread, nil] the joined thread or nil if not started
     def wait
       @reader_thread&.join
     end
 
+    # Return a snapshot of the currently buffered lines.
+    # @return [Array<String>]
     def lines
       @buf_mutex.synchronize { @buffer.dup }
     end
 
+    # Return true when the background reader thread is alive.
+    # @return [Boolean]
     def alive?
       @reader_thread&.alive? || false
     end
 
     # Redraw the reserved area using the current buffered lines.
+    #
+    # @param io [IO] the IO stream to draw into (defaults to $stderr)
+    # @return [void]
     def redraw(io = $stderr)
       buf = lines
       debug_log("redraw called; buffer=#{buf.size}; lines=#{@lines}; position=#{@position}")
@@ -154,6 +226,9 @@ module RubyProgress
     # Flush the buffered lines to the given IO (defaults to STDOUT).
     # This is used when capturing non-live output: capture silently during
     # the run and emit all captured output at the end.
+    #
+    # @param io [IO] the IO to write captured lines to (defaults to STDOUT)
+    # @return [void]
     def flush_to(io = $stdout)
       buf = lines
       return if buf.empty?
@@ -171,16 +246,35 @@ module RubyProgress
     private
 
     def spawn_and_read
-      PTY.spawn(@command) do |reader, _writer, pid|
+      # Run the command through the user's login shell so that shell aliases,
+      # functions, and PATH modifications are available.
+      shell = ENV['SHELL'] || '/bin/sh'
+      argv = ShellExec.build_shell_argv(shell, @command)
+
+      debug_log("spawning via shell=#{shell} argv=#{argv.inspect} raw_cmd=#{@command.inspect}")
+
+      PTY.spawn(shell, *argv) do |reader, _writer, pid|
         @child_pid = pid
         debug_log("spawned pid=#{pid} cmd=#{@command}")
 
         until reader.eof? || @stop
-          ready = if reader.respond_to?(:wait_readable)
-                    reader.wait_readable(0.1)
-                  else
-                    IO.select([reader], nil, nil, 0.1)
-                  end
+          # Prefer IO#wait_readable when available (avoids Fiber scheduler issues).
+          # If not available, attempt to use an underlying IO via #to_io, otherwise
+          # fall back to a short sleep to avoid calling deprecated/select APIs.
+          io = if reader.respond_to?(:wait_readable)
+                 reader
+               elsif reader.respond_to?(:to_io)
+                 reader.to_io
+               end
+
+          # Prefer IO#wait_readable when available (use safe navigation).
+          if io.respond_to?(:wait_readable)
+            ready = io.wait_readable(0.1)
+          else
+            # Best-effort fallback: sleep briefly and continue reading loop.
+            sleep 0.1
+            ready = true
+          end
           next unless ready
 
           chunk = reader.read_nonblock(4096, exception: false)
@@ -249,25 +343,6 @@ module RubyProgress
       end
     end
 
-    def reserve_space(io = $stderr)
-      return unless io.tty?
-
-      debug_log("reserve_space called; position=#{@position.inspect}; lines=#{@lines}")
-
-      if @position == :above
-        # Insert lines above current cursor using CSI n L
-        io.print "\e[#{@lines}L"
-        debug_log("reserve_space: inserted #{@lines} lines for :above")
-      else
-        # Print newlines then move cursor back up so animation stays above
-        io.print("\n" * @lines)
-        io.print "\e[#{@lines}A"
-        debug_log("reserve_space: printed #{@lines} newlines and moved up #{@lines} for :below")
-      end
-
-      io.flush
-    rescue StandardError => e
-      debug_log("reserve_space error: #{e.class}: #{e.message}")
-    end
+    # reserve_space moved to RubyProgress::OutputUI
   end
 end

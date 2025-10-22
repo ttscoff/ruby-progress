@@ -1,17 +1,37 @@
 # frozen_string_literal: true
 
 module RubyProgress
-  # Universal terminal utilities shared between progress indicators
+  # Universal terminal utilities shared between progress indicators.
+  #
+  # This module provides common functionality for terminal manipulation,
+  # cursor control, and output formatting used across all progress indicator types.
   module Utils
-    # Terminal cursor control
+    # Hides the terminal cursor.
+    #
+    # @return [void]
+    # @example
+    #   RubyProgress::Utils.hide_cursor
     def self.hide_cursor
       $stderr.print "\e[?25l"
     end
 
+    # Shows the terminal cursor.
+    #
+    # @return [void]
+    # @example
+    #   RubyProgress::Utils.show_cursor
     def self.show_cursor
       $stderr.print "\e[?25h"
     end
 
+    # Clears the current terminal line.
+    #
+    # @param output_stream [Symbol, IO] Stream to clear (:stdout, :stderr, or IO object)
+    # @return [void]
+    # @example Clear to stderr (default)
+    #   RubyProgress::Utils.clear_line
+    # @example Clear to stdout
+    #   RubyProgress::Utils.clear_line(:stdout)
     def self.clear_line(output_stream = :stderr)
       io = case output_stream
            when :stdout
@@ -26,18 +46,40 @@ module RubyProgress
       io.print "\r\e[K"
     end
 
-    # Enhanced line clearing for daemon mode that handles output interruption
+    # Enhanced line clearing for daemon mode that handles output interruption.
+    #
+    # Clears the current line and the line above it, useful when daemon
+    # output has been interrupted by other command output.
+    #
+    # @return [void]
+    # @example
+    #   RubyProgress::Utils.clear_line_aggressive
     def self.clear_line_aggressive
       $stderr.print "\r\e[2K"    # Clear entire current line
       $stderr.print "\e[1A\e[2K" # Move up one line and clear it too
       $stderr.print "\r"         # Return to start of line
     end
 
-    # Universal completion message display
+    # Displays a completion message with optional icons and formatting.
+    #
+    # Universal completion message display that handles success/error states,
+    # custom icons, and output stream selection.
+    #
     # @param message [String] The message to display
-    # @param success [Boolean] Whether this represents success or failure
+    # @param success [Boolean] Whether this represents success (true) or failure (false)
     # @param show_checkmark [Boolean] Whether to show checkmark/X symbols
-    # @param output_stream [Symbol] Where to output (:stdout, :stderr, :warn)
+    # @param output_stream [Symbol, IO] Where to output (:stdout, :stderr, :warn, or IO object)
+    # @param icons [Hash] Custom icons hash with :success and :error keys
+    # @option icons [String] :success Custom success icon (overrides default ✅)
+    # @option icons [String] :error Custom error icon (overrides default 🛑)
+    # @return [void]
+    # @example Basic success message
+    #   RubyProgress::Utils.display_completion("Done!", success: true, show_checkmark: true)
+    # @example With custom icons
+    #   RubyProgress::Utils.display_completion("Build complete",
+    #     success: true,
+    #     show_checkmark: true,
+    #     icons: { success: '🚀', error: '💥' })
     def self.display_completion(message, success: true, show_checkmark: false, output_stream: :warn, icons: {})
       return unless message
 
@@ -87,16 +129,42 @@ module RubyProgress
       end
     end
 
-    # Clear current line and display completion message
-    # Convenience method that combines line clearing with message display
+    # Clears the current line and displays a completion message.
+    #
+    # Convenience method that combines line clearing with message display.
+    # Note: When output_stream is :warn, line clearing is already included
+    # in display_completion.
+    #
+    # @param message [String] The message to display
+    # @param success [Boolean] Whether this represents success (true) or failure (false)
+    # @param show_checkmark [Boolean] Whether to show checkmark/X symbols
+    # @param output_stream [Symbol, IO] Where to output (:stdout, :stderr, :warn, or IO object)
+    # @param icons [Hash] Custom icons hash with :success and :error keys
+    # @return [void]
+    # @see display_completion
+    # @example
+    #   RubyProgress::Utils.complete_with_clear("Task complete", success: true, show_checkmark: true)
     def self.complete_with_clear(message, success: true, show_checkmark: false, output_stream: :warn, icons: {})
       clear_line(output_stream) if output_stream != :warn # warn already includes clear in display_completion
       display_completion(message, success: success, show_checkmark: show_checkmark, output_stream: output_stream, icons: icons)
     end
 
-    # Parse start/end characters for animation wrapping
-    # @param ends_string [String] Even-length string to split in half for start/end chars
+    # Parses start/end characters for animation wrapping.
+    #
+    # Takes an even-length string and splits it in half to create start
+    # and end decorative characters for progress indicators. Handles
+    # multi-byte characters correctly.
+    #
+    # @param ends_string [String, nil] Even-length string to split in half
     # @return [Array<String>] Array with [start_chars, end_chars]
+    # @example Basic decoration
+    #   RubyProgress::Utils.parse_ends("[]")  # => ["[", "]"]
+    # @example Multi-character decoration
+    #   RubyProgress::Utils.parse_ends("<<>>")  # => ["<<", ">>"]
+    # @example Emoji decoration
+    #   RubyProgress::Utils.parse_ends("🎯🎪")  # => ["🎯", "🎪"]
+    # @example Empty or nil input
+    #   RubyProgress::Utils.parse_ends(nil)  # => ["", ""]
     def self.parse_ends(ends_string)
       return ['', ''] unless ends_string && !ends_string.empty?
 
@@ -110,7 +178,20 @@ module RubyProgress
       [start_chars, end_chars]
     end
 
-    # Validate ends string: must be non-empty and even-length (handles multi-byte chars)
+    # Validates an ends string for proper format.
+    #
+    # Checks that the string is non-empty and has an even number of
+    # characters (handles multi-byte characters correctly).
+    #
+    # @param ends_string [String, nil] String to validate
+    # @return [Boolean] true if valid, false otherwise
+    # @example Valid strings
+    #   RubyProgress::Utils.ends_valid?("[]")  # => true
+    #   RubyProgress::Utils.ends_valid?("🎯🎪")  # => true
+    # @example Invalid strings
+    #   RubyProgress::Utils.ends_valid?("abc")  # => false (odd length)
+    #   RubyProgress::Utils.ends_valid?("")     # => false (empty)
+    #   RubyProgress::Utils.ends_valid?(nil)    # => false (nil)
     def self.ends_valid?(ends_string)
       return false unless ends_string && !ends_string.empty?
 

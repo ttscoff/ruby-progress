@@ -8,6 +8,9 @@ module RubyProgress
     # rubocop:disable Metrics/AbcSize
     module Options
       # rubocop :disable Metrics/MethodLength
+      # Parse CLI options for the fill subcommand.
+      #
+      # @return [Hash] parsed options keyed by symbols
       def self.parse_cli_options
         options = {
           style: :blocks,

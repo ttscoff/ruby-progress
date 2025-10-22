@@ -9,6 +9,16 @@ require_relative 'cli/worm_runner'
 module RubyProgress
   # Animated progress indicator with ripple effect using Unicode combining characters
   class Worm
+    # Worm indicator renders a small ripple/wave of characters. Use this
+    # class directly to control a running indicator, or use the CLI helpers
+    # which wrap this behavior for daemonization and command execution.
+    #
+    # Public instance methods (selected): #generate_dots
+    # Public module mixins provide the main animation loop via WormRunner.
+    #
+    # @example
+    #   w = RubyProgress::Worm.new(length: 5, message: 'loading')
+    #   w.send(:generate_dots, 2, 1) # => "..o.."
     # Ripple effect styles
     RIPPLE_STYLES = {
       'circles' => {
@@ -56,6 +66,13 @@ module RubyProgress
     }.freeze
 
     def initialize(options = {})
+      # Create a new Worm indicator instance.
+      #
+      # @param options [Hash] configuration options
+      # @option options [Integer] :length number of characters in the ripple (default 3)
+      # @option options [String] :message optional label text
+      # @option options [String,Symbol] :style ripple style name or custom spec
+      # @return [void]
       @length = options[:length] || 3
       @message = options[:message]
       @speed = parse_speed(options[:speed] || 'medium')
@@ -154,7 +171,7 @@ module RubyProgress
         input_chars.all? do |char|
           idx = key_chars.index(char)
           if idx
-            key_chars = key_chars[idx + 1..-1] # Remove matched chars and continue
+            key_chars = key_chars[(idx + 1)..-1] # Remove matched chars and continue
             true
           else
             false
@@ -207,6 +224,11 @@ module RubyProgress
     # @output_capture&.redraw) will be overridden.
 
     def generate_dots(ripple_position, direction)
+      # Generate the string representing the ripple at a given position.
+      #
+      # @param ripple_position [Integer] index of the ripple peak
+      # @param direction [Integer] -1 for left-moving, +1 for right-moving
+      # @return [String] composed characters for current frame
       dots = Array.new(@length) { @style[:baseline] }
 
       # Apply ripple effect

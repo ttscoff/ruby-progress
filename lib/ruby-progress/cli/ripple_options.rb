@@ -6,6 +6,9 @@ require 'json'
 module RippleCLI
   # Option parsing extracted to its own file to reduce module size of RippleCLI.
   module Options
+    # Parse CLI options for the ripple subcommand.
+    #
+    # @return [Hash] parsed options keyed by symbols
     def self.parse_cli_options
       options = {
         speed: :medium,

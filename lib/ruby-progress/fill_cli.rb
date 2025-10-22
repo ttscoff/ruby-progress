@@ -12,6 +12,10 @@ module RubyProgress
   # rubocop:disable Metrics/ClassLength
   module FillCLI
     class << self
+      # Entrypoint for the `prg fill` CLI. Parses options and dispatches to
+      # the matching behavior (auto-advance, command-run, daemon, report).
+      #
+      # @return [void]
       def run
         trap('INT') do
           Utils.show_cursor

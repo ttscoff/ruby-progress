@@ -8,6 +8,9 @@ module WormCLI
   # Keeps the CLI option definitions for `prg worm` extracted from
   # the main dispatcher to keep the CLI module small and focused.
   module Options
+    # Parse CLI options for the worm subcommand.
+    #
+    # @return [Hash] parsed options keyed by symbols
     def self.parse_cli_options
       options = {
         output_position: :above,

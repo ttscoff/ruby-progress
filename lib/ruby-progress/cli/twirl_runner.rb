@@ -12,6 +12,12 @@ require_relative '../output_capture'
 # indefinitely, or launching in daemon mode) and were extracted to
 # reduce module size and improve testability.
 module TwirlRunner
+  # Runtime helper: run the provided command while showing a twirl spinner.
+  # Captures output via RubyProgress::OutputCapture when appropriate and
+  # prints final completion messages according to options.
+  #
+  # @param options [Hash] CLI options parsed from TwirlCLI::Options
+  # @return [void] exits with appropriate status code (0 success, 1 failure)
   def self.run_with_command(options)
     message = options[:message]
     captured_output = nil
@@ -72,6 +78,10 @@ module TwirlRunner
     exit success ? 0 : 1
   end
 
+  # Run the spinner indefinitely until interrupted (SIGINT).
+  #
+  # @param options [Hash] CLI options used to configure the spinner
+  # @return [void] exits 130 on interrupt
   def self.run_indefinitely(options)
     message = options[:message]
     spinner = TwirlSpinner.new(message, options)
@@ -96,6 +106,11 @@ module TwirlRunner
     end
   end
 
+  # Run the spinner in daemon mode. Writes a pid file and listens for
+  # control messages via the daemon control message file.
+  #
+  # @param options [Hash]
+  # @return [void]
   def self.run_daemon_mode(options)
     pid_file = resolve_pid_file(options, :daemon_name)
     FileUtils.mkdir_p(File.dirname(pid_file))
@@ -150,6 +165,11 @@ module TwirlRunner
     end
   end
 
+  # Resolve pid file helper used by run_daemon_mode and CLI.
+  #
+  # @param options [Hash]
+  # @param name_key [Symbol]
+  # @return [String]
   def self.resolve_pid_file(options, name_key)
     return options[:pid_file] if options[:pid_file]
 

@@ -3,6 +3,16 @@
 module RubyProgress
   # Determinate progress bar with customizable fill styles
   class Fill
+    # A simple determinate progress bar that can be advanced programmatically
+    # or used with the block-based convenience method {Fill.progress}.
+    #
+    # Public API (instance): #advance, #percent=, #completed?, #render, #complete, #cancel
+    # Public API (class): .progress, .parse_custom_style
+    #
+    # @example
+    #   Fill.progress(length: 10) do |bar|
+    #     10.times { bar.advance; sleep 0.1 }
+    #   end
     # Built-in fill styles with empty and full characters
     FILL_STYLES = {
       blocks: { empty: '▱', full: '▰' },
@@ -19,6 +29,14 @@ module RubyProgress
     attr_reader :length, :style, :current_progress, :start_chars, :end_chars
     attr_accessor :success_message, :error_message
 
+    # Initialize a progress bar instance.
+    #
+    # @param options [Hash] configuration values
+    # @option options [Integer] :length number of cells in the bar (default 20)
+    # @option options [Symbol,String,Hash] :style style name, symbol, or custom hash
+    # @option options [String] :success success message shown on completion
+    # @option options [String] :error error message shown on cancel/exception
+    # @return [void]
     def initialize(options = {})
       @length = options[:length] || 20
       @style = parse_style(options[:style] || :blocks)
@@ -36,7 +54,11 @@ module RubyProgress
       end
     end
 
-    # Advance the progress bar by one step or specified increment
+    # Advance the progress bar by one step or specified increment.
+    #
+    # @param increment [Integer] amount to increase progress by (default 1)
+    # @param percent [Numeric,nil] optional percent to set the bar to (0-100)
+    # @return [Boolean] true if the bar is complete after advancing
     def advance(increment: 1, percent: nil)
       @current_progress = if percent
                             [@length * percent / 100.0, @length].min.round
@@ -48,7 +70,10 @@ module RubyProgress
       completed?
     end
 
-    # Set progress to specific percentage (0-100)
+    # Set progress to specific percentage (0-100).
+    #
+    # @param percent [Numeric] percentage 0..100 to set the bar to
+    # @return [Boolean] true if the bar is complete after setting percent
     def percent=(percent)
       percent = percent.clamp(0, 100) # Clamp between 0-100
       @current_progress = (@length * percent / 100.0).round
@@ -56,22 +81,30 @@ module RubyProgress
       completed?
     end
 
-    # Check if progress bar is complete
+    # Check if progress bar is complete.
+    #
+    # @return [Boolean]
     def completed?
       @current_progress >= @length
     end
 
-    # Get current progress as percentage
+    # Get current progress as percentage.
+    #
+    # @return [Float] percentage (0.0-100.0) rounded to 1 decimal place
     def percent
       (@current_progress.to_f / @length * 100).round(1)
     end
 
-    # Get current progress as float (0.0-100.0) - for scripting
+    # Get current progress as float (0.0-100.0) - for scripting.
+    #
+    # @return [Float]
     def current
       (@current_progress.to_f / @length * 100).round(1)
     end
 
-    # Get detailed progress status information
+    # Get detailed progress status information.
+    #
+    # @return [Hash] structured status information about the bar
     def report
       {
         progress: [@current_progress, @length],
@@ -81,7 +114,9 @@ module RubyProgress
       }
     end
 
-    # Render the current progress bar to stderr
+    # Render the current progress bar to stderr.
+    #
+    # @return [void]
     def render
       # First redraw captured output (if any) so it appears above/below the bar
       @output_capture&.redraw($stderr)
@@ -94,7 +129,11 @@ module RubyProgress
       $stderr.flush
     end
 
-    # Complete the progress bar and show success message
+    # Complete the progress bar and show success message.
+    #
+    # @param message [String,nil] optional override message
+    # @param icons [Hash] optional icons map passed to Utils.display_completion
+    # @return [void]
     def complete(message = nil, icons: {})
       @current_progress = @length
       render
@@ -113,7 +152,10 @@ module RubyProgress
       end
     end
 
-    # Cancel the progress bar and show error message
+    # Cancel the progress bar and show error message.
+    #
+    # @param message [String,nil] optional override message
+    # @return [void]
     def cancel(message = nil)
       $stderr.print "\r\e[2K" # Clear the progress bar
       $stderr.flush

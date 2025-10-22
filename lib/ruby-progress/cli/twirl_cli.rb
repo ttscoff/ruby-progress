@@ -7,6 +7,16 @@ require_relative 'twirl_runner'
 
 # Twirl CLI (extracted from bin/prg)
 module TwirlCLI
+  # CLI dispatcher for the Twirl spinner indicator. Parses options and
+  # dispatches to runtime helpers in TwirlRunner or controls daemons via
+  # RubyProgress::Daemon.
+  #
+  # Public methods:
+  # - .run
+  # - .resolve_pid_file
+  # - .parse_cli_options
+  #
+  # @return [void]
   def self.run
     trap('INT') do
       RubyProgress::Utils.show_cursor
@@ -43,6 +53,11 @@ module TwirlCLI
   end
 
   # runtime methods moved to TwirlRunner
+  # Resolve the pid file path used for named/unnamed daemons.
+  #
+  # @param options [Hash]
+  # @param name_key [Symbol]
+  # @return [String]
   def self.resolve_pid_file(options, name_key)
     return options[:pid_file] if options[:pid_file]
 

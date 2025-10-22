@@ -6,7 +6,7 @@
 [![Ruby](https://img.shields.io/badge/ruby-%3E%3D%202.5.0-ruby.svg)](https://www.ruby-lang.org/)
 <!-- [![Coverage Status](https://img.shields.io/badge/coverage-31%25-yellow.svg)](#) -->
 
-This repository contains three different Ruby progress indicator projects: **Ripple**, **Worm**, and **Twirl**. All provide animated terminal progress indicators with different visual styles and features.
+This repository contains a collection of Ruby progress indicator projects: **Ripple**, **Worm**, **Twirl**, and **Fill**. All provide animated terminal progress indicators with different visual styles and features.
 
 ## Table of Contents
 

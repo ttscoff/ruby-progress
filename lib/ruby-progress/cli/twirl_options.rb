@@ -9,6 +9,9 @@ module TwirlCLI
   # Keeps the CLI option definitions extracted from the main dispatcher
   # so the `TwirlCLI` module stays small and focused on dispatching.
   module Options
+    # Parse CLI options for the twirl subcommand.
+    #
+    # @return [Hash] parsed options keyed by symbols
     def self.parse_cli_options
       options = {
         output_position: :above,
